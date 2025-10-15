@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { SettingsDialog } from "@/components/SettingsDialog";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster, toast } from "sonner";
@@ -64,7 +64,16 @@ function App() {
     return localStorage.getItem("token") || "";
   });
 
-  const fetchPullRequestStatus = async () => {
+  const fetchPullRequestStatus = async (event: FormEvent) => {
+    event.preventDefault();
+
+    const match = pullRequestNumber.match(/\/pull\/(\d+)/);
+    const pr = match ? match[1] : pullRequestNumber;
+
+    const newUrl = `${window.location.pathname}?pr=${pr}`;
+    window.history.pushState({}, "", newUrl);
+
+    setPullRequestNumber(pr);
     setIsFetching(true);
     setPullRequestInfomation(null);
     setPullRequestBranchStatus(null);
@@ -77,8 +86,6 @@ function App() {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    const match = pullRequestNumber.match(/\/pull\/(\d+)/);
-    const pr = match ? match[1] : pullRequestNumber;
     const response = await fetch(
       `https://api.github.com/repos/nixos/nixpkgs/pulls/${pr}`,
       { headers },
@@ -182,10 +189,7 @@ function App() {
 
               <form
                 className="col-span-2 flex w-full max-w-sm items-center gap-2"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  fetchPullRequestStatus();
-                }}
+                onSubmit={fetchPullRequestStatus}
               >
                 <Input
                   required
