@@ -12,6 +12,11 @@
         pkgs = inputs.nixpkgs.legacyPackages.${system};
       in
       {
+        packages = rec {
+          default = nixpkgs-tracker;
+          nixpkgs-tracker = pkgs.callPackage ./package.nix { };
+        };
+
         devShells.default = pkgs.mkShellNoCC {
           nativeBuildInputs = with pkgs; [
             nodePackages.prettier
