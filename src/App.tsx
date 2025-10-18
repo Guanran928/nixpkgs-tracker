@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { SettingsDialog } from "@/components/SettingsDialog";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster, toast } from "sonner";
@@ -50,7 +50,21 @@ interface PullRequestBranchStatus {
 }
 
 function App() {
-  const [pullRequestNumber, setPullRequestNumber] = useState("");
+  useEffect(() => {
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+    const pullRequest = urlParams.get("pr");
+
+    if (pullRequest) {
+      fetchPullRequestStatus();
+    }
+  }, []);
+
+  const [pullRequestNumber, setPullRequestNumber] = useState(() => {
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+    return urlParams.get("pr") || "";
+  });
   const [pullRequestInfomation, setPullRequestInfomation] =
     useState<null | PullRequestInfomation>(null);
   const [pullRequestBranchStatus, setPullRequestBranchStatus] = useState<
@@ -64,9 +78,7 @@ function App() {
     return localStorage.getItem("token") || "";
   });
 
-  const fetchPullRequestStatus = async (event: FormEvent) => {
-    event.preventDefault();
-
+  const fetchPullRequestStatus = async () => {
     const match = pullRequestNumber.match(/\/pull\/(\d+)/);
     const pr = match ? match[1] : pullRequestNumber;
 
@@ -189,7 +201,10 @@ function App() {
 
               <form
                 className="col-span-2 flex w-full max-w-sm items-center gap-2"
-                onSubmit={fetchPullRequestStatus}
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  fetchPullRequestStatus();
+                }}
               >
                 <Input
                   required
