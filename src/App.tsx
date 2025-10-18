@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState  } from "react";
 import { SettingsDialog } from "@/components/SettingsDialog";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster, toast } from "sonner";
