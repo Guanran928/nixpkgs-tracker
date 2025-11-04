@@ -1,4 +1,8 @@
+import { ListMinus, ListPlus } from "lucide-react";
+import { toast } from "sonner";
+
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -33,27 +37,87 @@ export interface PullRequestBranchStatus {
   status: "merged" | "not-merged" | "fetch-error";
 }
 
+export interface PullRequestMetadata {
+  pullRequestNumber: number;
+  pullRequestInformation: PullRequestInformation | null;
+  pullRequestBranchStatus: PullRequestBranchStatus[] | null;
+}
+
 export default function PullRequestStatus({
   pullRequestInformation,
   pullRequestBranchStatus,
+  setTrackingPullRequests,
+  tracked,
 }: {
   pullRequestInformation: PullRequestInformation | null;
   pullRequestBranchStatus: PullRequestBranchStatus[] | null;
+  setTrackingPullRequests: React.Dispatch<
+    React.SetStateAction<PullRequestMetadata[]>
+  >;
+  tracked: boolean;
 }) {
   return (
     <>
       {pullRequestInformation && (
         <>
-          <Badge>
-            {(() => {
-              const state = pullRequestInformation.state;
-              const merged = pullRequestInformation.merged;
+          <div className="flex items-center justify-between">
+            <Badge>
+              {(() => {
+                const state = pullRequestInformation.state;
+                const merged = pullRequestInformation.merged;
 
-              if (state === "open") return "Open";
-              if (merged) return "Merged";
-              return "Closed";
-            })()}
-          </Badge>
+                if (state === "open") return "Open";
+                if (merged) return "Merged";
+                return "Closed";
+              })()}
+            </Badge>
+            {tracked ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setTrackingPullRequests((currentTracking) =>
+                    currentTracking.filter(
+                      (pr) =>
+                        pr.pullRequestNumber !== pullRequestInformation.number,
+                    ),
+                  );
+                  toast.success(
+                    `Stopped tracking PR #${pullRequestInformation.number}`,
+                  );
+                }}
+              >
+                <ListMinus />
+                Untrack this PR
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setTrackingPullRequests((currentTracking) => {
+                    const alreadyExists = currentTracking.find(
+                      (obj) =>
+                        obj.pullRequestNumber === pullRequestInformation.number,
+                    );
+
+                    if (alreadyExists) {
+                      toast("Pull request is already being tracked!");
+                      return currentTracking;
+                    } else {
+                      const newItem = {
+                        pullRequestNumber: pullRequestInformation.number,
+                      } as PullRequestMetadata;
+                      return [...currentTracking, newItem];
+                    }
+                  });
+                }}
+              >
+                <ListPlus />
+                Track this PR
+              </Button>
+            )}
+          </div>
           <h4 className="scroll-m-20 text-xl font-semibold tracking-tight">
             <a
               href={pullRequestInformation.html_url}
@@ -86,7 +150,6 @@ export default function PullRequestStatus({
               return `closed on ${formatDate(pullRequestInformation.closed_at)}`;
             })()}
           </div>
-
           {pullRequestInformation.state == "closed" && (
             <>
               <Separator className="my-2" />
