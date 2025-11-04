@@ -1,4 +1,4 @@
-import { ListMinus, ListPlus } from "lucide-react";
+import { BellRing, BellOff } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -87,7 +87,7 @@ export default function PullRequestStatus({
                   );
                 }}
               >
-                <ListMinus />
+                <BellOff />
                 Untrack this PR
               </Button>
             ) : (
@@ -113,7 +113,7 @@ export default function PullRequestStatus({
                   });
                 }}
               >
-                <ListPlus />
+                <BellRing />
                 Track this PR
               </Button>
             )}
