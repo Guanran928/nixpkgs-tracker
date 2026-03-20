@@ -305,7 +305,7 @@ function App() {
             </Card>
           )}
         </div>
-        <footer className="text-muted-foreground text-center text-xs">
+        <footer className="bg-background/50 text-muted-foreground px-4 py-2 text-center text-xs">
           <div>Made with &lt;3 by Guanran Wang</div>
           <div>
             <a
