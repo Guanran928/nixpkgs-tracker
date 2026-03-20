@@ -207,19 +207,19 @@ function App() {
 
   return (
     <>
-      <div className="flex h-screen flex-col items-center justify-center space-y-2">
+      <div className="flex flex-col items-center justify-center space-y-2 p-4 md:h-screen">
         {/* TODO: I want to animate the height change! */}
-        <div className="flex max-h-2/3 flex-col items-start gap-2 md:flex-row">
-          <Card className="h-full w-96 max-w-sm overflow-y-scroll">
+        <div className="items-start space-y-2 md:flex md:flex-row md:gap-2">
+          <Card className="w-96 max-w-sm overflow-y-scroll">
             <CardHeader>
-              <CardTitle className="text-left">
+              <CardTitle>
                 <span className="bg-muted relative rounded px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold">
                   nixpkgs
                 </span>{" "}
                 Pull Request Tracker
               </CardTitle>
 
-              <CardDescription className="text-left">
+              <CardDescription>
                 Enter a PR number or its URL to track its status.
               </CardDescription>
 
@@ -228,7 +228,7 @@ function App() {
               </CardAction>
 
               <form
-                className="col-span-2 flex w-full max-w-sm items-center gap-2"
+                className="col-span-2 flex gap-2"
                 onSubmit={(e) => {
                   e.preventDefault();
                   fetchPullRequestStatus();
@@ -240,6 +240,7 @@ function App() {
                   id="pull"
                   placeholder="e.g. 449457"
                   value={pullRequestNumber}
+                  className="w-full"
                   onChange={(e) => setPullRequestNumber(e.target.value)}
                 />
                 <Button disabled={isFetching} type="submit">
@@ -252,7 +253,7 @@ function App() {
             {pullRequestInformation && (
               <>
                 <Separator />
-                <CardContent className="text-left">
+                <CardContent>
                   <PullRequestStatus
                     pullRequestInformation={pullRequestInformation}
                     pullRequestBranchStatus={pullRequestBranchStatus}
@@ -265,7 +266,7 @@ function App() {
           </Card>
 
           {trackingPullRequests.length > 0 && (
-            <Card className="h-full w-96 max-w-sm overflow-y-scroll">
+            <Card className="w-96 max-w-sm overflow-y-scroll md:max-h-[65vh]">
               <div className="space-y-3">
                 <CardHeader className="font-medium">
                   <CardTitle className="flex items-center gap-2">

@@ -73,6 +73,7 @@ export default function PullRequestStatusCompact({
                     ));
                   })()
                 ) : (
+                  // FIXME
                   <>
                     <div className="flex justify-between">
                       <Skeleton className="h-6 w-[120px]" />
@@ -96,7 +97,7 @@ export default function PullRequestStatusCompact({
           )}
 
           {/* Track & Untrack */}
-          <button className="absolute top-1/2 right-2 hidden -translate-y-1/2 group-hover:block">
+          <button className="dark:bg-background absolute top-1/2 right-2 hidden -translate-y-1/2 group-hover:block">
             {tracked ? (
               <Button
                 variant="outline"
