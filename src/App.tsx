@@ -278,14 +278,18 @@ function App() {
               {trackingPullRequests.map((pr) => {
                 if (!pr.pullRequestInformation || !pr.pullRequestBranchStatus) {
                   return (
-                    <Skeleton
-                      className="mx-4 h-48 p-2"
-                      key={pr.pullRequestNumber}
-                    >
-                      Loading PR #{pr.pullRequestNumber}...
-                    </Skeleton>
+                    <div key={pr.pullRequestNumber} className="mx-6 space-y-1">
+                      <div className="flex justify-between gap-2">
+                        <Skeleton className="h-6 w-[100px]" />
+                        <span className="text-muted-foreground font-semibold">
+                          #{pr.pullRequestNumber}
+                        </span>
+                      </div>
+                      <Skeleton className="h-6 w-full" />
+                    </div>
                   );
                 }
+
                 return (
                   <CardContent key={pr.pullRequestNumber}>
                     <PullRequestStatusCompact
