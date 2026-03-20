@@ -299,7 +299,7 @@ function App() {
             </Card>
           )}
         </div>
-        <footer className="text-muted-foreground text-center text-sm">
+        <footer className="text-muted-foreground text-center text-xs">
           <div>Made with &lt;3 by Guanran Wang</div>
           <div>
             <a
