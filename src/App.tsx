@@ -6,6 +6,7 @@ import type {
 
 import { GitPullRequestArrow } from "lucide-react";
 import PullRequestStatus from "@/components/PullRequestStatus";
+import PullRequestStatusCompact from "@/components/PullRequestStatusCompact";
 import { SettingsDialog } from "@/components/SettingsDialog";
 import { toast } from "sonner";
 import { useCallback, useEffect, useState } from "react";
@@ -287,7 +288,7 @@ function App() {
                 }
                 return (
                   <CardContent key={pr.pullRequestNumber}>
-                    <PullRequestStatus
+                    <PullRequestStatusCompact
                       pullRequestInformation={pr.pullRequestInformation}
                       pullRequestBranchStatus={pr.pullRequestBranchStatus}
                       setTrackingPullRequests={setTrackingPullRequests}
