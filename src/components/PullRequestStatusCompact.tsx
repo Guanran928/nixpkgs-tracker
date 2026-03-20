@@ -60,13 +60,22 @@ export default function PullRequestStatusCompact({
                       (b) => b.status !== "merged",
                     );
 
+                    const getVariant = (
+                      status: PullRequestBranchStatus["status"],
+                    ) => {
+                      switch (status) {
+                        case "merged":
+                          return "default";
+                        case "not-merged":
+                          return "secondary";
+                        case "fetch-error":
+                          return "destructive";
+                      }
+                    };
+
                     return [...merged, ...others].map((branch) => (
                       <li key={branch.branch}>
-                        <Badge
-                          variant={
-                            branch.status === "merged" ? "default" : "secondary"
-                          }
-                        >
+                        <Badge variant={getVariant(branch.status)}>
                           {branch.branch}
                         </Badge>
                       </li>

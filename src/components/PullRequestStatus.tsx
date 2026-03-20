@@ -158,16 +158,25 @@ export default function PullRequestStatus({
               <ul className="space-y-1">
                 {pullRequestBranchStatus ? (
                   pullRequestBranchStatus.map((branch) => {
+                    const getVariant = (
+                      status: PullRequestBranchStatus["status"],
+                    ) => {
+                      switch (status) {
+                        case "merged":
+                          return "default";
+                        case "not-merged":
+                          return "secondary";
+                        case "fetch-error":
+                          return "destructive";
+                      }
+                    };
+
                     return (
                       <li className="flex justify-between">
                         <div className="bg-muted relative rounded px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold">
                           {branch.branch}
                         </div>
-                        <Badge
-                          variant={
-                            branch.status === "merged" ? "default" : "secondary"
-                          }
-                        >
+                        <Badge variant={getVariant(branch.status)}>
                           {branch.status}
                         </Badge>
                       </li>
