@@ -69,14 +69,12 @@ function App() {
         { headers },
       );
 
-      if (response.status === 404) {
-        toast.error(`Error while fetching PR #${pr}: Not found`);
-        return null;
-      } else if (response.status === 403) {
-        toast.error(`Error while fetching PR #${pr}: Rate limit reached`);
-        return null;
-      } else if (!response.ok) {
-        toast.error(`Error while fetching PR #${pr}: Unknown Error`);
+      if (response.ok == false) {
+        const data = await response.json();
+        toast.error(`Error while fetching PR #${pr}`, {
+          description: data.message,
+        });
+
         return null;
       }
 
@@ -109,26 +107,12 @@ function App() {
             { headers },
           );
 
-          if (response.status === 404) {
-            toast.error(
-              `Error while fetching branch data for PR #${pr}: Not found`,
-            );
-            return {
-              branch,
-              status: "fetch-error",
-            } as PullRequestBranchStatus;
-          } else if (response.status === 403) {
-            toast.error(
-              `Error while fetching branch data for PR #${pr}: Rate limit reached`,
-            );
-            return {
-              branch,
-              status: "fetch-error",
-            } as PullRequestBranchStatus;
-          } else if (!response.ok) {
-            toast.error(
-              `Error while fetching branch data for PR #${pr}: Unknown Error`,
-            );
+          if (response.ok == false) {
+            const prdata = await response.json();
+            toast.error(`Error while fetching branch data for PR #${pr}`, {
+              description: prdata.message,
+            });
+
             return {
               branch,
               status: "fetch-error",
