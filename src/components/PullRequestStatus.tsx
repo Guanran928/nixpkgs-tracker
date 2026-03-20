@@ -75,6 +75,7 @@ export default function PullRequestStatus({
               <Button
                 variant="outline"
                 size="sm"
+                className="h-7 text-xs"
                 onClick={() => {
                   setTrackingPullRequests((currentTracking) =>
                     currentTracking.filter(
@@ -88,12 +89,13 @@ export default function PullRequestStatus({
                 }}
               >
                 <BellOff />
-                Untrack this PR
+                Untrack
               </Button>
             ) : (
               <Button
                 variant="outline"
                 size="sm"
+                className="h-7 text-xs"
                 onClick={() => {
                   setTrackingPullRequests((currentTracking) => {
                     const alreadyExists = currentTracking.find(
@@ -114,7 +116,7 @@ export default function PullRequestStatus({
                 }}
               >
                 <BellRing />
-                Track this PR
+                Track
               </Button>
             )}
           </div>
