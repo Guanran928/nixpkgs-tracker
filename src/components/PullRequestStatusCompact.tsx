@@ -4,7 +4,7 @@ import type {
   PullRequestMetadata,
 } from "./PullRequestStatus";
 
-import { BellRing, BellOff } from "lucide-react";
+import { BellRing, BellOff, Check, CircleAlert } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -73,9 +73,23 @@ export default function PullRequestStatusCompact({
                       }
                     };
 
+                    const getIcon = (
+                      status: PullRequestBranchStatus["status"],
+                    ) => {
+                      switch (status) {
+                        case "merged":
+                          return <Check />;
+                        case "not-merged":
+                          return <></>;
+                        case "fetch-error":
+                          return <CircleAlert />;
+                      }
+                    };
+
                     return [...merged, ...others].map((branch) => (
                       <li key={branch.branch}>
                         <Badge variant={getVariant(branch.status)}>
+                          {getIcon(branch.status)}
                           {branch.branch}
                         </Badge>
                       </li>

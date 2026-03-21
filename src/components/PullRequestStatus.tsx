@@ -1,4 +1,4 @@
-import { BellRing, BellOff } from "lucide-react";
+import { BellRing, BellOff, Check, CircleAlert } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -171,13 +171,40 @@ export default function PullRequestStatus({
                       }
                     };
 
+                    const getIcon = (
+                      status: PullRequestBranchStatus["status"],
+                    ) => {
+                      switch (status) {
+                        case "merged":
+                          return <Check />;
+                        case "not-merged":
+                          return <></>;
+                        case "fetch-error":
+                          return <CircleAlert />;
+                      }
+                    };
+
+                    const getText = (
+                      status: PullRequestBranchStatus["status"],
+                    ) => {
+                      switch (status) {
+                        case "merged":
+                          return "Merged";
+                        case "not-merged":
+                          return "Not merged";
+                        case "fetch-error":
+                          return "Fetch error";
+                      }
+                    };
+
                     return (
                       <li className="flex justify-between">
                         <div className="bg-muted relative rounded px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold">
                           {branch.branch}
                         </div>
                         <Badge variant={getVariant(branch.status)}>
-                          {branch.status}
+                          {getIcon(branch.status)}
+                          {getText(branch.status)}
                         </Badge>
                       </li>
                     );
