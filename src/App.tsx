@@ -82,23 +82,45 @@ function App() {
       const data = (await response.json()) as PullRequestInformation;
 
       let branches;
-      switch (data.base.ref) {
-        case "master":
-        case "staging-next":
-          branches = [
-            "nixpkgs-unstable",
-            "nixos-unstable",
-            "nixos-unstable-small",
-          ];
-          break;
-        default:
-          // TODO: don't hard code this
-          branches = [
-            "nixos-25.05",
-            "nixos-25.05-small",
-            "nixpkgs-25.05-darwin",
-          ];
-          break;
+      const releaseMatch = data.base.ref.match(/^release-(\d+\.\d+)$/);
+
+      if (releaseMatch) {
+        const ver = releaseMatch[1];
+        branches = [
+          `nixos-${ver}`,
+          `nixos-${ver}-small`,
+          `nixpkgs-${ver}-darwin`,
+        ];
+      } else {
+        switch (data.base.ref) {
+          case "master":
+            branches = [
+              "nixpkgs-unstable",
+              "nixos-unstable",
+              "nixos-unstable-small",
+            ];
+            break;
+          case "staging":
+            branches = [
+              "staging-next",
+              "nixpkgs-unstable",
+              "nixos-unstable",
+              "nixos-unstable-small",
+            ];
+            break;
+          case "python-updates":
+            branches = [
+              "staging",
+              "staging-next",
+              "nixpkgs-unstable",
+              "nixos-unstable",
+              "nixos-unstable-small",
+            ];
+            break;
+          default:
+            toast.error("Unknown target branch");
+            return null;
+        }
       }
 
       const status = await Promise.all(
