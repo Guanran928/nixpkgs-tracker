@@ -120,7 +120,7 @@ export default function PullRequestStatusCompact({
           )}
 
           {/* Track & Untrack */}
-          <button className="dark:bg-background absolute top-1/2 right-2 hidden -translate-y-1/2 group-hover:block">
+          <div className="dark:bg-background absolute top-1/2 right-2 hidden -translate-y-1/2 group-hover:block">
             {tracked ? (
               <Button
                 variant="outline"
@@ -167,7 +167,7 @@ export default function PullRequestStatusCompact({
                 <BellRing />
               </Button>
             )}
-          </button>
+          </div>
         </div>
       )}
     </>
