@@ -115,8 +115,7 @@ function App() {
           `nixos-${ver}-small`,
           `nixpkgs-${ver}-darwin`,
         ];
-      }
-      if (releaseStagingMatch) {
+      } else if (releaseStagingMatch) {
         const ver = releaseStagingMatch[1];
         branches = [
           `staging-next-${ver}`,
