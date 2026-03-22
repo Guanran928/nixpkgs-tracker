@@ -120,12 +120,12 @@ export default function PullRequestStatusCompact({
           )}
 
           {/* Track & Untrack */}
-          <div className="dark:bg-background absolute top-1/2 right-2 hidden -translate-y-1/2 group-hover:block">
+          <div className="absolute top-1/2 right-2 hidden -translate-y-1/2 group-hover:block">
             {tracked ? (
               <Button
                 variant="outline"
                 size="sm"
-                className="h-7 text-xs"
+                className="bg-background h-7 text-xs"
                 onClick={() => {
                   setTrackingPullRequests((currentTracking) =>
                     currentTracking.filter(
@@ -144,7 +144,7 @@ export default function PullRequestStatusCompact({
               <Button
                 variant="outline"
                 size="sm"
-                className="h-7 text-xs"
+                className="bg-background h-7 text-xs"
                 onClick={() => {
                   setTrackingPullRequests((currentTracking) => {
                     const alreadyExists = currentTracking.find(
