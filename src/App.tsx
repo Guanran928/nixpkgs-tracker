@@ -246,7 +246,7 @@ function App() {
 
   return (
     <>
-      <div className="flex flex-col items-center justify-center space-y-2 p-4 md:h-screen">
+      <div className="flex h-screen flex-col items-center justify-between p-4 md:p-8">
         {/* TODO: I want to animate the height change! */}
         <div className="items-start space-y-2 md:flex md:flex-row md:gap-2">
           <Card className="w-96 max-w-sm overflow-y-scroll">
