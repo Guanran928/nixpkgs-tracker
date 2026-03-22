@@ -121,6 +121,6 @@
       var(--ring) 0.5px,
       var(--background) 0.5px
     );
-    background-size: 10px 10px;
+    background-size: 9px 9px;
   }
 }
