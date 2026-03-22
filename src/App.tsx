@@ -45,6 +45,10 @@ function App() {
     null | number
   >(null);
 
+  const [rateLimitResetTimeStamp, setRateLimitResetTimeStamp] = useState<
+    null | number
+  >(null);
+
   const [trackingPullRequests, setTrackingPullRequests] = useState<
     PullRequestMetadata[]
   >(() => JSON.parse(localStorage.getItem("tracking_pull_requests") || "[]"));
@@ -67,6 +71,34 @@ function App() {
       ),
     );
   }, [trackingPullRequests]);
+
+  const parseRateLimitHeaders = (headers: Headers) => {
+    const rateLimitRemaining = headers.get("x-ratelimit-remaining");
+
+    if (rateLimitRemaining) {
+      const rateLimitRemainingInt = parseInt(rateLimitRemaining, 10);
+
+      if (!isNaN(rateLimitRemainingInt)) {
+        setRateLimitRemainingRequests((prev) =>
+          prev === null || rateLimitRemainingInt < prev
+            ? rateLimitRemainingInt
+            : prev,
+        );
+      }
+    }
+
+    const rateLimitReset = headers.get("x-ratelimit-reset");
+
+    if (rateLimitReset) {
+      const rateLimitResetInt = parseInt(rateLimitReset, 10);
+
+      if (!isNaN(rateLimitResetInt)) {
+        setRateLimitResetTimeStamp((prev) =>
+          prev === null || rateLimitResetInt > prev ? rateLimitResetInt : prev,
+        );
+      }
+    }
+  };
 
   const fetchPullRequestData = useCallback(
     async (pr: string) => {
@@ -92,19 +124,7 @@ function App() {
         return null;
       }
 
-      const rateLimitRemaining = response.headers.get("x-ratelimit-remaining");
-
-      if (rateLimitRemaining) {
-        const rateLimitRemainingInt = parseInt(rateLimitRemaining, 10);
-
-        if (!isNaN(rateLimitRemainingInt)) {
-          setRateLimitRemainingRequests((prev) =>
-            prev === null || rateLimitRemainingInt < prev
-              ? rateLimitRemainingInt
-              : prev,
-          );
-        }
-      }
+      parseRateLimitHeaders(response.headers);
 
       const data = (await response.json()) as PullRequestInformation;
 
@@ -189,21 +209,7 @@ function App() {
             } as PullRequestBranchStatus;
           }
 
-          const rateLimitRemaining = response.headers.get(
-            "x-ratelimit-remaining",
-          );
-
-          if (rateLimitRemaining) {
-            const rateLimitRemainingInt = parseInt(rateLimitRemaining, 10);
-
-            if (!isNaN(rateLimitRemainingInt)) {
-              setRateLimitRemainingRequests((prev) =>
-                prev === null || rateLimitRemainingInt < prev
-                  ? rateLimitRemainingInt
-                  : prev,
-              );
-            }
-          }
+          parseRateLimitHeaders(response.headers);
 
           const prdata = await response.json();
           if (prdata.status === "identical" || prdata.status === "behind") {
@@ -309,11 +315,16 @@ function App() {
           {!token &&
             rateLimitRemainingRequests &&
             rateLimitRemainingRequests < 100 && (
-              <div>
-                <Badge>
-                  Remaining requests before GitHub API rate limit:{" "}
-                  {rateLimitRemainingRequests}
-                </Badge>
+              <div className="flex flex-wrap justify-center gap-1">
+                <Badge>{rateLimitRemainingRequests} requests remaining</Badge>
+                {rateLimitResetTimeStamp && (
+                  <Badge>
+                    Resets at{" "}
+                    {new Date(
+                      rateLimitResetTimeStamp * 1000,
+                    ).toLocaleTimeString()}
+                  </Badge>
+                )}
               </div>
             )}
           {/* TODO: I want to animate the height change! */}
