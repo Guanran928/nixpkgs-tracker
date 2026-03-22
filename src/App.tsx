@@ -11,6 +11,7 @@ import { SettingsDialog } from "@/components/SettingsDialog";
 import { toast } from "sonner";
 import { useCallback, useEffect, useState } from "react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -43,6 +44,10 @@ function App() {
   const [trackingPullRequests, setTrackingPullRequests] = useState<
     PullRequestMetadata[]
   >(() => JSON.parse(localStorage.getItem("tracking_pull_requests") || "[]"));
+
+  const [trackingPullRequestsFailed, setTrackingPullRequestsFailed] = useState<
+    number[]
+  >([]);
 
   useEffect(() => {
     localStorage.setItem(
@@ -159,15 +164,27 @@ function App() {
   );
 
   useEffect(() => {
-    const prsWithoutData = trackingPullRequests.filter(
-      (pr) => !pr.pullRequestInformation,
-    );
+    const prsWithoutData = trackingPullRequests
+      .filter((pr) => !pr.pullRequestInformation)
+      .filter(
+        (pr) => !trackingPullRequestsFailed.includes(pr.pullRequestNumber),
+      );
+
     if (prsWithoutData.length > 0) {
       const fetchAndUpdate = async () => {
         const newPrData = await Promise.all(
-          prsWithoutData.map((pr) =>
-            fetchPullRequestData(pr.pullRequestNumber.toString()),
-          ),
+          prsWithoutData.map(async (pr) => {
+            const data = await fetchPullRequestData(
+              pr.pullRequestNumber.toString(),
+            );
+            if (!data) {
+              setTrackingPullRequestsFailed((prev) => [
+                ...prev,
+                pr.pullRequestNumber,
+              ]);
+            }
+            return data;
+          }),
         );
 
         setTrackingPullRequests((currentPRs) => {
@@ -308,7 +325,15 @@ function App() {
                           #{pr.pullRequestNumber}
                         </span>
                       </div>
-                      <Skeleton className="h-6 w-full" />
+                      {trackingPullRequestsFailed.includes(
+                        pr.pullRequestNumber,
+                      ) ? (
+                        <Badge variant="destructive">
+                          Failed to fetch PR data
+                        </Badge>
+                      ) : (
+                        <Skeleton className="h-6 w-full" />
+                      )}
                     </div>
                   );
                 }
