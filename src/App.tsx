@@ -41,6 +41,10 @@ function App() {
     return localStorage.getItem("token") || "";
   });
 
+  const [rateLimitRemainingRequests, setRateLimitRemainingRequests] = useState<
+    null | number
+  >(null);
+
   const [trackingPullRequests, setTrackingPullRequests] = useState<
     PullRequestMetadata[]
   >(() => JSON.parse(localStorage.getItem("tracking_pull_requests") || "[]"));
@@ -82,6 +86,20 @@ function App() {
         });
 
         return null;
+      }
+
+      const rateLimitRemaining = response.headers.get("x-ratelimit-remaining");
+
+      if (rateLimitRemaining) {
+        const rateLimitRemainingInt = parseInt(rateLimitRemaining);
+
+        if (
+          !isNaN(rateLimitRemainingInt) &&
+          (rateLimitRemainingRequests === null ||
+            rateLimitRemainingInt < rateLimitRemainingRequests)
+        ) {
+          setRateLimitRemainingRequests(rateLimitRemainingInt);
+        }
       }
 
       const data = (await response.json()) as PullRequestInformation;
@@ -166,6 +184,22 @@ function App() {
               branch,
               status: "fetch-error",
             } as PullRequestBranchStatus;
+          }
+
+          const rateLimitRemaining = response.headers.get(
+            "x-ratelimit-remaining",
+          );
+
+          if (rateLimitRemaining) {
+            const rateLimitRemainingInt = parseInt(rateLimitRemaining);
+
+            if (
+              !isNaN(rateLimitRemainingInt) &&
+              (rateLimitRemainingRequests === null ||
+                rateLimitRemainingInt < rateLimitRemainingRequests)
+            ) {
+              setRateLimitRemainingRequests(rateLimitRemainingInt);
+            }
           }
 
           const prdata = await response.json();
@@ -268,110 +302,127 @@ function App() {
   return (
     <>
       <div className="flex h-screen flex-col items-center justify-between p-4 md:p-8">
-        {/* TODO: I want to animate the height change! */}
-        <div className="items-start space-y-2 md:flex md:flex-row md:gap-2">
-          <Card className="w-96 max-w-sm overflow-y-scroll">
-            <CardHeader>
-              <CardTitle>
-                <span className="bg-muted relative rounded px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold">
-                  nixpkgs
-                </span>{" "}
-                Pull Request Tracker
-              </CardTitle>
+        <div className="flex flex-col items-center space-y-3 md:space-y-4">
+          {!token && rateLimitRemainingRequests && (
+            <div>
+              <Badge>
+                Remaining requests before GitHub API rate limit:{" "}
+                {rateLimitRemainingRequests}
+              </Badge>
+            </div>
+          )}
+          {/* TODO: I want to animate the height change! */}
+          <div className="items-start space-y-2 md:flex md:flex-row md:gap-2">
+            <Card className="w-96 max-w-sm overflow-y-scroll">
+              <CardHeader>
+                <CardTitle>
+                  <span className="bg-muted relative rounded px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold">
+                    nixpkgs
+                  </span>{" "}
+                  Pull Request Tracker
+                </CardTitle>
 
-              <CardDescription>
-                Enter a PR number or its URL to track its status.
-              </CardDescription>
+                <CardDescription>
+                  Enter a PR number or its URL to track its status.
+                </CardDescription>
 
-              <CardAction>
-                <SettingsDialog token={token} setToken={setToken} />
-              </CardAction>
+                <CardAction>
+                  <SettingsDialog token={token} setToken={setToken} />
+                </CardAction>
 
-              <form
-                className="col-span-2 flex gap-2"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  fetchPullRequestStatus();
-                }}
-              >
-                <Input
-                  required
-                  type="text"
-                  id="pull"
-                  placeholder="e.g. 449457"
-                  value={pullRequestNumber}
-                  className="w-full"
-                  onChange={(e) => setPullRequestNumber(e.target.value)}
-                />
-                <Button disabled={isFetching} type="submit">
-                  {isFetching && <Spinner />}
-                  Check Status
-                </Button>
-              </form>
-            </CardHeader>
-
-            {pullRequestInformation && (
-              <>
-                <Separator />
-                <CardContent>
-                  <PullRequestStatus
-                    pullRequestInformation={pullRequestInformation}
-                    pullRequestBranchStatus={pullRequestBranchStatus}
-                    setTrackingPullRequests={setTrackingPullRequests}
-                    tracked={false}
+                <form
+                  className="col-span-2 flex gap-2"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    fetchPullRequestStatus();
+                  }}
+                >
+                  <Input
+                    required
+                    type="text"
+                    id="pull"
+                    placeholder="e.g. 449457"
+                    value={pullRequestNumber}
+                    className="w-full"
+                    onChange={(e) => setPullRequestNumber(e.target.value)}
                   />
-                </CardContent>
-              </>
-            )}
-          </Card>
+                  <Button disabled={isFetching} type="submit">
+                    {isFetching && <Spinner />}
+                    Check Status
+                  </Button>
+                </form>
+              </CardHeader>
 
-          {trackingPullRequests.length > 0 && (
-            <Card className="w-96 max-w-sm overflow-y-scroll md:max-h-[65vh]">
-              <div className="space-y-3">
-                <CardHeader className="font-medium">
-                  <CardTitle className="flex items-center gap-2">
-                    <GitPullRequestArrow />
-                    <h4>Pull requests</h4>
-                  </CardTitle>
-                </CardHeader>
-                <Separator />
-              </div>
-              {trackingPullRequests.map((pr) => {
-                if (!pr.pullRequestInformation || !pr.pullRequestBranchStatus) {
-                  return (
-                    <div key={pr.pullRequestNumber} className="mx-6 space-y-1">
-                      <div className="flex justify-between gap-2">
-                        <Skeleton className="h-6 w-[100px]" />
-                        <span className="text-muted-foreground font-semibold">
-                          #{pr.pullRequestNumber}
-                        </span>
-                      </div>
-                      {trackingPullRequestsFailed.includes(
-                        pr.pullRequestNumber,
-                      ) ? (
-                        <Badge variant="destructive">
-                          Failed to fetch PR data
-                        </Badge>
-                      ) : (
-                        <Skeleton className="h-6 w-full" />
-                      )}
-                    </div>
-                  );
-                }
-
-                return (
-                  <CardContent key={pr.pullRequestNumber}>
-                    <PullRequestStatusCompact
-                      pullRequestInformation={pr.pullRequestInformation}
-                      pullRequestBranchStatus={pr.pullRequestBranchStatus}
+              {pullRequestInformation && (
+                <>
+                  <Separator />
+                  <CardContent>
+                    <PullRequestStatus
+                      pullRequestInformation={pullRequestInformation}
+                      pullRequestBranchStatus={pullRequestBranchStatus}
                       setTrackingPullRequests={setTrackingPullRequests}
-                      tracked={true}
+                      tracked={false}
                     />
                   </CardContent>
-                );
-              })}
+                </>
+              )}
             </Card>
-          )}
+
+            {trackingPullRequests.length > 0 && (
+              <Card className="w-96 max-w-sm overflow-y-scroll md:max-h-[65vh]">
+                <div className="space-y-3">
+                  <CardHeader className="font-medium">
+                    <CardTitle className="flex items-center gap-2">
+                      <GitPullRequestArrow />
+                      <h4>Pull requests</h4>
+                    </CardTitle>
+                  </CardHeader>
+                  <Separator />
+                </div>
+                {trackingPullRequests.map((pr) => {
+                  // FIXME: untrack button is not shown in skeleton mode
+                  if (
+                    !pr.pullRequestInformation ||
+                    !pr.pullRequestBranchStatus
+                  ) {
+                    return (
+                      <div
+                        key={pr.pullRequestNumber}
+                        className="mx-6 space-y-1"
+                      >
+                        <div className="flex justify-between gap-2">
+                          <Skeleton className="h-6 w-[100px]" />
+                          <span className="text-muted-foreground font-semibold">
+                            #{pr.pullRequestNumber}
+                          </span>
+                        </div>
+                        {trackingPullRequestsFailed.includes(
+                          pr.pullRequestNumber,
+                        ) ? (
+                          <Badge variant="destructive">
+                            Failed to fetch PR data
+                          </Badge>
+                        ) : (
+                          <Skeleton className="h-6 w-full" />
+                        )}
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <CardContent key={pr.pullRequestNumber}>
+                      <PullRequestStatusCompact
+                        pullRequestInformation={pr.pullRequestInformation}
+                        pullRequestBranchStatus={pr.pullRequestBranchStatus}
+                        setTrackingPullRequests={setTrackingPullRequests}
+                        tracked={true}
+                      />
+                    </CardContent>
+                  );
+                })}
+              </Card>
+            )}
+          </div>
         </div>
         <footer className="bg-background/50 text-muted-foreground px-4 py-2 text-center text-xs">
           <div>Made with &lt;3 by Guanran Wang</div>
