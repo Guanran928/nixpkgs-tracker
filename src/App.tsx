@@ -329,7 +329,7 @@ function App() {
             )}
           {/* TODO: I want to animate the height change! */}
           <div className="items-start space-y-2 md:flex md:flex-row md:gap-2">
-            <Card className="w-96 max-w-sm overflow-y-scroll">
+            <Card className="w-96 max-w-sm">
               <CardHeader>
                 <CardTitle>
                   <span className="bg-muted relative rounded px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold">
@@ -385,7 +385,7 @@ function App() {
             </Card>
 
             {trackingPullRequests.length > 0 && (
-              <Card className="w-96 max-w-sm overflow-y-scroll md:max-h-[65vh]">
+              <Card className="w-96 max-w-sm overflow-y-auto">
                 <div className="space-y-3">
                   <CardHeader className="font-medium">
                     <CardTitle className="flex items-center gap-2">
