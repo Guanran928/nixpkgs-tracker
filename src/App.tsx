@@ -95,14 +95,14 @@ function App() {
       const rateLimitRemaining = response.headers.get("x-ratelimit-remaining");
 
       if (rateLimitRemaining) {
-        const rateLimitRemainingInt = parseInt(rateLimitRemaining);
+        const rateLimitRemainingInt = parseInt(rateLimitRemaining, 10);
 
-        if (
-          !isNaN(rateLimitRemainingInt) &&
-          (rateLimitRemainingRequests === null ||
-            rateLimitRemainingInt < rateLimitRemainingRequests)
-        ) {
-          setRateLimitRemainingRequests(rateLimitRemainingInt);
+        if (!isNaN(rateLimitRemainingInt)) {
+          setRateLimitRemainingRequests((prev) =>
+            prev === null || rateLimitRemainingInt < prev
+              ? rateLimitRemainingInt
+              : prev,
+          );
         }
       }
 
@@ -194,14 +194,14 @@ function App() {
           );
 
           if (rateLimitRemaining) {
-            const rateLimitRemainingInt = parseInt(rateLimitRemaining);
+            const rateLimitRemainingInt = parseInt(rateLimitRemaining, 10);
 
-            if (
-              !isNaN(rateLimitRemainingInt) &&
-              (rateLimitRemainingRequests === null ||
-                rateLimitRemainingInt < rateLimitRemainingRequests)
-            ) {
-              setRateLimitRemainingRequests(rateLimitRemainingInt);
+            if (!isNaN(rateLimitRemainingInt)) {
+              setRateLimitRemainingRequests((prev) =>
+                prev === null || rateLimitRemainingInt < prev
+                  ? rateLimitRemainingInt
+                  : prev,
+              );
             }
           }
 
