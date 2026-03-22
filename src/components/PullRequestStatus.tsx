@@ -61,16 +61,21 @@ export default function PullRequestStatus({
       {pullRequestInformation && (
         <>
           <div className="flex items-center justify-between">
-            <Badge>
-              {(() => {
-                const state = pullRequestInformation.state;
-                const merged = pullRequestInformation.merged;
+            <div className="space-x-1">
+              <Badge>
+                {(() => {
+                  const state = pullRequestInformation.state;
+                  const merged = pullRequestInformation.merged;
 
-                if (state === "open") return "Open";
-                if (merged) return "Merged";
-                return "Closed";
-              })()}
-            </Badge>
+                  if (state === "open") return "Open";
+                  if (merged) return "Merged";
+                  return "Closed";
+                })()}
+              </Badge>
+              <Badge variant="secondary">
+                {pullRequestInformation.base.ref}
+              </Badge>
+            </div>
             {tracked ? (
               <Button
                 variant="outline"
