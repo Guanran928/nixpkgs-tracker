@@ -88,10 +88,21 @@ function App() {
 
       let branches;
       const releaseMatch = data.base.ref.match(/^release-(\d+\.\d+)$/);
+      const releaseStagingMatch = data.base.ref.match(/^staging-(\d+\.\d+)$/);
 
       if (releaseMatch) {
         const ver = releaseMatch[1];
         branches = [
+          `nixos-${ver}`,
+          `nixos-${ver}-small`,
+          `nixpkgs-${ver}-darwin`,
+        ];
+      }
+      if (releaseStagingMatch) {
+        const ver = releaseStagingMatch[1];
+        branches = [
+          `staging-next-${ver}`,
+          `release-${ver}`,
           `nixos-${ver}`,
           `nixos-${ver}-small`,
           `nixpkgs-${ver}-darwin`,
@@ -105,9 +116,18 @@ function App() {
               "nixos-unstable-small",
             ];
             break;
+          case "staging-next":
+            branches = [
+              "master",
+              "nixpkgs-unstable",
+              "nixos-unstable",
+              "nixos-unstable-small",
+            ];
+            break;
           case "staging":
             branches = [
               "staging-next",
+              "master",
               "nixpkgs-unstable",
               "nixos-unstable",
               "nixos-unstable-small",
@@ -117,6 +137,7 @@ function App() {
             branches = [
               "staging",
               "staging-next",
+              "master",
               "nixpkgs-unstable",
               "nixos-unstable",
               "nixos-unstable-small",
