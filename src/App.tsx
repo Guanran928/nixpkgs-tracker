@@ -54,6 +54,10 @@ function App() {
   >([]);
 
   useEffect(() => {
+    setRateLimitRemainingRequests(null);
+  }, [token]);
+
+  useEffect(() => {
     localStorage.setItem(
       "tracking_pull_requests",
       JSON.stringify(
@@ -302,14 +306,16 @@ function App() {
     <>
       <div className="flex h-screen flex-col items-center justify-between p-4 md:p-8">
         <div className="flex flex-col items-center space-y-3 md:space-y-4">
-          {!token && rateLimitRemainingRequests && (
-            <div>
-              <Badge>
-                Remaining requests before GitHub API rate limit:{" "}
-                {rateLimitRemainingRequests}
-              </Badge>
-            </div>
-          )}
+          {!token &&
+            rateLimitRemainingRequests &&
+            rateLimitRemainingRequests < 100 && (
+              <div>
+                <Badge>
+                  Remaining requests before GitHub API rate limit:{" "}
+                  {rateLimitRemainingRequests}
+                </Badge>
+              </div>
+            )}
           {/* TODO: I want to animate the height change! */}
           <div className="items-start space-y-2 md:flex md:flex-row md:gap-2">
             <Card className="w-96 max-w-sm overflow-y-scroll">
