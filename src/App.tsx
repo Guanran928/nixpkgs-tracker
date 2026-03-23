@@ -9,7 +9,7 @@ import PullRequestStatus from "@/components/PullRequestStatus";
 import PullRequestStatusCompact from "@/components/PullRequestStatusCompact";
 import { SettingsDialog } from "@/components/SettingsDialog";
 import { toast } from "sonner";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 
 type PullRequestInformation = components["schemas"]["pull-request"];
+
+const DEFAULT_TITLE = document.title;
 
 function App() {
   useEffect(() => {
@@ -288,13 +290,11 @@ function App() {
     null | PullRequestBranchStatus[]
   >(null);
 
-  const defaultTitle = useRef(document.title);
-
   useEffect(() => {
     if (pullRequestInformation?.number && pullRequestInformation?.title) {
       document.title = `#${pullRequestInformation.number}: ${pullRequestInformation.title}`;
     } else {
-      document.title = defaultTitle.current;
+      document.title = DEFAULT_TITLE;
     }
   }, [pullRequestInformation]);
 
