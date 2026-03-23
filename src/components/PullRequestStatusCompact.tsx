@@ -4,8 +4,10 @@ import type {
 } from "./PullRequestStatus";
 import type { components } from "@octokit/openapi-types";
 
+import { useIsOverflowing } from "@/hooks/use-is-overflowing";
 import { BellRing, BellOff, Check, CircleAlert } from "lucide-react";
 import { toast } from "sonner";
+import { useRef } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,6 +28,9 @@ export default function PullRequestStatusCompact({
   >;
   tracked: boolean;
 }) {
+  const ref = useRef(null);
+  const { overflowLeft, overflowRight } = useIsOverflowing(ref);
+
   return (
     <>
       {pullRequestInformation && (
@@ -48,9 +53,14 @@ export default function PullRequestStatusCompact({
 
           {pullRequestInformation.state == "closed" && (
             <div className="relative">
+              {overflowLeft && (
+                <div className="from-card pointer-events-none absolute inset-y-0 left-0 w-6 bg-linear-to-r to-transparent" />
+              )}
+
               <ul
                 className="no-scrollbar flex space-x-1 overflow-x-auto whitespace-nowrap"
                 style={{ scrollbarWidth: "none" }}
+                ref={ref}
               >
                 {pullRequestBranchStatus ? (
                   // merged branches are sorted to the front
@@ -116,9 +126,9 @@ export default function PullRequestStatusCompact({
                 )}
               </ul>
 
-              {/* Right fade */}
-              {/* FIXME: improve this */}
-              <div className="from-card pointer-events-none absolute inset-y-0 right-0 w-6 bg-linear-to-l to-transparent" />
+              {overflowRight && (
+                <div className="from-card pointer-events-none absolute inset-y-0 right-0 w-6 bg-linear-to-l to-transparent" />
+              )}
             </div>
           )}
 
