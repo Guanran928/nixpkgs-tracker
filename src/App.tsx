@@ -34,6 +34,12 @@ type RateLimitState = {
   resetTimestamp: number | null;
 };
 
+type PullRequestLookupState = {
+  isFetching: boolean;
+  information: PullRequestInformation | null;
+  branchStatus: PullRequestBranchStatus[] | null;
+};
+
 const DEFAULT_TITLE = document.title;
 
 function App() {
@@ -63,6 +69,24 @@ function App() {
   const [trackingPullRequestsFailed, setTrackingPullRequestsFailed] = useState<
     number[]
   >([]);
+
+  const [pullRequestLookup, setPullRequestLookup] =
+    useState<PullRequestLookupState>({
+      isFetching: false,
+      information: null,
+      branchStatus: null,
+    });
+
+  useEffect(() => {
+    if (
+      pullRequestLookup?.information?.number &&
+      pullRequestLookup?.information?.title
+    ) {
+      document.title = `#${pullRequestLookup.information.number}: ${pullRequestLookup.information.title}`;
+    } else {
+      document.title = DEFAULT_TITLE;
+    }
+  }, [pullRequestLookup]);
 
   useEffect(() => {
     setRateLimit({ remaining: null, resetTimestamp: null });
@@ -292,21 +316,6 @@ function App() {
     const urlParams = new URLSearchParams(queryString);
     return urlParams.get("pr") || "";
   });
-  const [pullRequestInformation, setPullRequestInformation] =
-    useState<null | PullRequestInformation>(null);
-  const [pullRequestBranchStatus, setPullRequestBranchStatus] = useState<
-    null | PullRequestBranchStatus[]
-  >(null);
-
-  useEffect(() => {
-    if (pullRequestInformation?.number && pullRequestInformation?.title) {
-      document.title = `#${pullRequestInformation.number}: ${pullRequestInformation.title}`;
-    } else {
-      document.title = DEFAULT_TITLE;
-    }
-  }, [pullRequestInformation]);
-
-  const [isFetching, setIsFetching] = useState(false);
 
   const fetchPullRequestStatus = async () => {
     const match = pullRequestNumber.match(/\/pull\/(\d+)/);
@@ -316,16 +325,19 @@ function App() {
     window.history.pushState({}, "", newUrl);
 
     setPullRequestNumber(pr);
-    setIsFetching(true);
-    setPullRequestInformation(null);
-    setPullRequestBranchStatus(null);
+
+    setPullRequestLookup({
+      isFetching: true,
+      information: null,
+      branchStatus: null,
+    });
 
     const data = await fetchPullRequestData(pr);
-    if (data) {
-      setPullRequestInformation(data.pullRequestInformation);
-      setPullRequestBranchStatus(data.pullRequestBranchStatus);
-    }
-    setIsFetching(false);
+    setPullRequestLookup({
+      isFetching: false,
+      information: data?.pullRequestInformation ?? null,
+      branchStatus: data?.pullRequestBranchStatus ?? null,
+    });
   };
 
   return (
@@ -381,20 +393,20 @@ function App() {
                     className="w-full"
                     onChange={(e) => setPullRequestNumber(e.target.value)}
                   />
-                  <Button disabled={isFetching} type="submit">
-                    {isFetching && <Spinner />}
+                  <Button disabled={pullRequestLookup.isFetching} type="submit">
+                    {pullRequestLookup.isFetching && <Spinner />}
                     Check Status
                   </Button>
                 </form>
               </CardHeader>
 
-              {pullRequestInformation && (
+              {pullRequestLookup.information && (
                 <>
                   <Separator />
                   <CardContent>
                     <PullRequestStatus
-                      pullRequestInformation={pullRequestInformation}
-                      pullRequestBranchStatus={pullRequestBranchStatus}
+                      pullRequestInformation={pullRequestLookup.information}
+                      pullRequestBranchStatus={pullRequestLookup.branchStatus}
                       setTrackingPullRequests={setTrackingPullRequests}
                       tracked={false}
                     />
