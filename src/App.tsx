@@ -27,6 +27,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 
 type PullRequestInformation = components["schemas"]["pull-request"];
+type GitHubErrorResponse = components["schemas"]["basic-error"];
 
 const DEFAULT_TITLE = document.title;
 
@@ -120,7 +121,7 @@ function App() {
       );
 
       if (!response.ok) {
-        const data = await response.json();
+        const data = (await response.json()) as GitHubErrorResponse;
         toast.error(`Error while fetching PR #${pr}`, {
           description: data.message,
         });
@@ -202,7 +203,7 @@ function App() {
           );
 
           if (!response.ok) {
-            const prdata = await response.json();
+            const prdata = (await response.json()) as GitHubErrorResponse;
 
             return {
               branch,
@@ -223,7 +224,9 @@ function App() {
 
       const failed = status.filter((s) => s.status === "fetch-error");
       if (failed.length > 0) {
-        const uniqueMessages = [...new Set(failed.map((s) => s.message))];
+        const uniqueMessages = [
+          ...new Set(failed.map((s) => s.message).filter(Boolean)),
+        ];
         toast.error(
           `Failed to fetch ${failed.length}/${branches.length} branches for PR #${pr}`,
           { description: uniqueMessages.join(", ") },
