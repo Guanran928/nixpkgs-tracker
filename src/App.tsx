@@ -119,7 +119,7 @@ function App() {
         { headers },
       );
 
-      if (response.ok == false) {
+      if (!response.ok) {
         const data = await response.json();
         toast.error(`Error while fetching PR #${pr}`, {
           description: data.message,
@@ -201,15 +201,13 @@ function App() {
             { headers },
           );
 
-          if (response.ok == false) {
+          if (!response.ok) {
             const prdata = await response.json();
-            toast.error(`Error while fetching branch data for PR #${pr}`, {
-              description: prdata.message,
-            });
 
             return {
               branch,
               status: "fetch-error",
+              message: prdata.message,
             } as PullRequestBranchStatus;
           }
 
@@ -222,6 +220,15 @@ function App() {
           return { branch, status: "not-merged" } as PullRequestBranchStatus;
         }),
       );
+
+      const failed = status.filter((s) => s.status === "fetch-error");
+      if (failed.length > 0) {
+        const uniqueMessages = [...new Set(failed.map((s) => s.message))];
+        toast.error(
+          `Failed to fetch ${failed.length}/${branches.length} branches for PR #${pr}`,
+          { description: uniqueMessages.join(", ") },
+        );
+      }
 
       return {
         pullRequestInformation: data,

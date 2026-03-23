@@ -13,6 +13,7 @@ type PullRequestInformation = components["schemas"]["pull-request"];
 export interface PullRequestBranchStatus {
   branch: string;
   status: "merged" | "not-merged" | "fetch-error";
+  message?: string;
 }
 
 export interface PullRequestMetadata {
