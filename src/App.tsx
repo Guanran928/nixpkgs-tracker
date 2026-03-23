@@ -29,6 +29,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 type PullRequestInformation = components["schemas"]["pull-request"];
 type GitHubErrorResponse = components["schemas"]["basic-error"];
 
+type RateLimitState = {
+  remaining: number | null;
+  resetTimestamp: number | null;
+};
+
 const DEFAULT_TITLE = document.title;
 
 function App() {
@@ -46,13 +51,10 @@ function App() {
     return localStorage.getItem("token") || "";
   });
 
-  const [rateLimitRemainingRequests, setRateLimitRemainingRequests] = useState<
-    null | number
-  >(null);
-
-  const [rateLimitResetTimeStamp, setRateLimitResetTimeStamp] = useState<
-    null | number
-  >(null);
+  const [rateLimit, setRateLimit] = useState<RateLimitState>({
+    remaining: null,
+    resetTimestamp: null,
+  });
 
   const [trackingPullRequests, setTrackingPullRequests] = useState<
     PullRequestMetadata[]
@@ -63,7 +65,7 @@ function App() {
   >([]);
 
   useEffect(() => {
-    setRateLimitRemainingRequests(null);
+    setRateLimit({ remaining: null, resetTimestamp: null });
   }, [token]);
 
   useEffect(() => {
@@ -79,28 +81,24 @@ function App() {
 
   const parseRateLimitHeaders = (headers: Headers) => {
     const rateLimitRemaining = headers.get("x-ratelimit-remaining");
-
-    if (rateLimitRemaining) {
-      const rateLimitRemainingInt = parseInt(rateLimitRemaining, 10);
-
-      if (!isNaN(rateLimitRemainingInt)) {
-        setRateLimitRemainingRequests((prev) =>
-          prev === null || rateLimitRemainingInt < prev
-            ? rateLimitRemainingInt
-            : prev,
-        );
-      }
-    }
-
     const rateLimitReset = headers.get("x-ratelimit-reset");
 
-    if (rateLimitReset) {
-      const rateLimitResetInt = parseInt(rateLimitReset, 10);
+    if (rateLimitRemaining && rateLimitReset) {
+      const remaining = parseInt(rateLimitRemaining, 10);
+      const resetTimestamp = parseInt(rateLimitReset, 10);
 
-      if (!isNaN(rateLimitResetInt)) {
-        setRateLimitResetTimeStamp((prev) =>
-          prev === null || rateLimitResetInt > prev ? rateLimitResetInt : prev,
-        );
+      if (!isNaN(remaining) && !isNaN(resetTimestamp)) {
+        setRateLimit((prev) => ({
+          remaining:
+            prev.remaining === null || remaining < prev.remaining
+              ? remaining
+              : prev.remaining,
+
+          resetTimestamp:
+            prev.resetTimestamp === null || resetTimestamp > prev.resetTimestamp
+              ? resetTimestamp
+              : prev.resetTimestamp,
+        }));
       }
     }
   };
@@ -335,18 +333,17 @@ function App() {
       <div className="flex h-screen flex-col items-center justify-between p-4 md:p-8">
         <div className="flex flex-col items-center space-y-3 md:space-y-4">
           {!token &&
-            rateLimitRemainingRequests &&
-            rateLimitRemainingRequests < 100 && (
+            rateLimit.remaining &&
+            rateLimit.resetTimestamp &&
+            rateLimit.remaining < 100 && (
               <div className="flex flex-wrap justify-center gap-1">
-                <Badge>{rateLimitRemainingRequests} requests remaining</Badge>
-                {rateLimitResetTimeStamp && (
-                  <Badge>
-                    Resets at{" "}
-                    {new Date(
-                      rateLimitResetTimeStamp * 1000,
-                    ).toLocaleTimeString()}
-                  </Badge>
-                )}
+                <Badge>{rateLimit.remaining} requests remaining</Badge>
+                <Badge>
+                  Resets at{" "}
+                  {new Date(
+                    rateLimit.resetTimestamp * 1000,
+                  ).toLocaleTimeString()}
+                </Badge>
               </div>
             )}
           {/* TODO: I want to animate the height change! */}
