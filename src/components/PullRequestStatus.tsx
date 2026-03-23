@@ -58,8 +58,7 @@ export default function PullRequestStatus({
             {tracked ? (
               <Button
                 variant="outline"
-                size="sm"
-                className="h-7 text-xs"
+                size="xs"
                 onClick={() => {
                   setTrackingPullRequests((currentTracking) =>
                     currentTracking.filter(
@@ -78,8 +77,7 @@ export default function PullRequestStatus({
             ) : (
               <Button
                 variant="outline"
-                size="sm"
-                className="h-7 text-xs"
+                size="xs"
                 onClick={() => {
                   setTrackingPullRequests((currentTracking) => {
                     const alreadyExists = currentTracking.find(

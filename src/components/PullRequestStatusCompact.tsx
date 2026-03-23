@@ -118,18 +118,17 @@ export default function PullRequestStatusCompact({
 
               {/* Right fade */}
               {/* FIXME: improve this */}
-              <div className="from-background pointer-events-none absolute inset-y-0 right-0 w-6 bg-linear-to-l to-transparent" />
+              <div className="from-card pointer-events-none absolute inset-y-0 right-0 w-6 bg-linear-to-l to-transparent" />
             </div>
           )}
 
           {/* Track & Untrack */}
           {/* FIXME: this is not really working on mobile */}
-          <div className="absolute top-1/2 right-2 hidden -translate-y-1/2 group-hover:block">
+          <div className="bg-background absolute top-1/2 right-2 hidden -translate-y-1/2 rounded-md group-hover:block">
             {tracked ? (
               <Button
                 variant="outline"
                 size="sm"
-                className="bg-background h-7 text-xs"
                 onClick={() => {
                   setTrackingPullRequests((currentTracking) =>
                     currentTracking.filter(
@@ -148,7 +147,6 @@ export default function PullRequestStatusCompact({
               <Button
                 variant="outline"
                 size="sm"
-                className="bg-background h-7 text-xs"
                 onClick={() => {
                   setTrackingPullRequests((currentTracking) => {
                     const alreadyExists = currentTracking.find(

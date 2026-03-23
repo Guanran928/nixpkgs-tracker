@@ -350,7 +350,7 @@ function App() {
               </div>
             )}
           {/* TODO: I want to animate the height change! */}
-          <div className="items-start space-y-2 md:flex md:flex-row md:gap-2">
+          <main className="items-start space-y-2 md:flex md:flex-row md:gap-2">
             <Card className="w-96 max-w-sm">
               <CardHeader>
                 <CardTitle>
@@ -460,7 +460,7 @@ function App() {
                 })}
               </Card>
             )}
-          </div>
+          </main>
         </div>
         <footer className="bg-background/50 text-muted-foreground px-4 py-2 text-center text-xs">
           <div>Made with &lt;3 by Guanran Wang</div>
