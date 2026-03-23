@@ -9,7 +9,7 @@ import PullRequestStatus from "@/components/PullRequestStatus";
 import PullRequestStatusCompact from "@/components/PullRequestStatusCompact";
 import { SettingsDialog } from "@/components/SettingsDialog";
 import { toast } from "sonner";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -285,6 +285,16 @@ function App() {
   const [pullRequestBranchStatus, setPullRequestBranchStatus] = useState<
     null | PullRequestBranchStatus[]
   >(null);
+
+  const defaultTitle = useRef(document.title);
+
+  useEffect(() => {
+    if (pullRequestInformation?.number && pullRequestInformation?.title) {
+      document.title = `#${pullRequestInformation.number}: ${pullRequestInformation.title}`;
+    } else {
+      document.title = defaultTitle.current;
+    }
+  }, [pullRequestInformation]);
 
   const [isFetching, setIsFetching] = useState(false);
 
