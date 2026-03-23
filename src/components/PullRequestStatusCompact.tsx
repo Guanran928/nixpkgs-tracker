@@ -1,8 +1,8 @@
 import type {
   PullRequestBranchStatus,
-  PullRequestInformation,
   PullRequestMetadata,
 } from "./PullRequestStatus";
+import type { components } from "@octokit/openapi-types";
 
 import { BellRing, BellOff, Check, CircleAlert } from "lucide-react";
 import { toast } from "sonner";
@@ -10,6 +10,8 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+
+type PullRequestInformation = components["schemas"]["pull-request"];
 
 export default function PullRequestStatusCompact({
   pullRequestInformation,
@@ -115,11 +117,13 @@ export default function PullRequestStatusCompact({
               </ul>
 
               {/* Right fade */}
+              {/* FIXME: improve this */}
               <div className="from-background pointer-events-none absolute inset-y-0 right-0 w-6 bg-linear-to-l to-transparent" />
             </div>
           )}
 
           {/* Track & Untrack */}
+          {/* FIXME: this is not really working on mobile */}
           <div className="absolute top-1/2 right-2 hidden -translate-y-1/2 group-hover:block">
             {tracked ? (
               <Button

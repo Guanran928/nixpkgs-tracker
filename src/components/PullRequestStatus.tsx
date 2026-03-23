@@ -1,3 +1,5 @@
+import type { components } from "@octokit/openapi-types";
+
 import { BellRing, BellOff, Check, CircleAlert } from "lucide-react";
 import { toast } from "sonner";
 
@@ -6,31 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export interface PullRequestInformation {
-  base: Branch;
-  closed_at: string;
-  created_at: string;
-  html_url: string;
-  merge_commit_sha: string;
-  merged: boolean;
-  merged_at: string;
-  merged_by: User;
-  number: number;
-  state: "open" | "closed";
-  title: string;
-  user: User;
-}
-
-export interface Branch {
-  ref: "staging-next" | "master" | string;
-}
-
-export interface User {
-  html_url: URL;
-  id: number;
-  login: string;
-  type: "User";
-}
+type PullRequestInformation = components["schemas"]["pull-request"];
 
 export interface PullRequestBranchStatus {
   branch: string;
@@ -152,9 +130,9 @@ export default function PullRequestStatus({
                 return `opened on ${formatDate(pullRequestInformation.created_at)}`;
               }
               if (merged) {
-                return `merged on ${formatDate(pullRequestInformation.merged_at)}`;
+                return `merged on ${formatDate(pullRequestInformation.merged_at!)}`;
               }
-              return `closed on ${formatDate(pullRequestInformation.closed_at)}`;
+              return `closed on ${formatDate(pullRequestInformation.closed_at!)}`;
             })()}
           </div>
           {pullRequestInformation.state == "closed" && (

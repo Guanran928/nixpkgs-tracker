@@ -1,8 +1,8 @@
 import type {
   PullRequestBranchStatus,
-  PullRequestInformation,
   PullRequestMetadata,
 } from "./components/PullRequestStatus";
+import type { components } from "@octokit/openapi-types";
 
 import { GitPullRequestArrow } from "lucide-react";
 import PullRequestStatus from "@/components/PullRequestStatus";
@@ -25,6 +25,8 @@ import {
   CardAction,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+
+type PullRequestInformation = components["schemas"]["pull-request"];
 
 function App() {
   useEffect(() => {
