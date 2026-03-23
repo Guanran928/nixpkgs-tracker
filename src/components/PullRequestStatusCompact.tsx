@@ -34,7 +34,7 @@ export default function PullRequestStatusCompact({
   return (
     <>
       {pullRequestInformation && (
-        <div className="group relative">
+        <div className="group relative" tabIndex={0}>
           <h4 className="flex scroll-m-20 justify-between font-semibold tracking-tight">
             <a
               href={pullRequestInformation.html_url}
@@ -134,7 +134,7 @@ export default function PullRequestStatusCompact({
 
           {/* Track & Untrack */}
           {/* FIXME: this is not really working on mobile */}
-          <div className="bg-background absolute top-1/2 right-2 hidden -translate-y-1/2 rounded-md group-hover:block">
+          <div className="bg-background absolute top-1/2 right-2 -translate-y-1/2 rounded-md opacity-0 transition duration-75 group-focus-within:opacity-100 group-hover:opacity-100">
             {tracked ? (
               <Button
                 variant="outline"
