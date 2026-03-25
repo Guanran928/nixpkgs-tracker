@@ -42,7 +42,7 @@ type PullRequestLookupState = {
 };
 
 const DEFAULT_TITLE = document.title;
-const MotionCard = motion(Card);
+const MotionCard = motion.create(Card);
 const fetchingPRs = new Set<number>();
 
 function App() {
