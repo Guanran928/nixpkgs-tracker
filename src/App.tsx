@@ -525,7 +525,7 @@ function App() {
                       return (
                         <div
                           key={pr.pullRequestNumber}
-                          className="px-6 space-y-1"
+                          className="space-y-1 px-6"
                         >
                           <div className="flex justify-between gap-2">
                             <Skeleton className="h-6 w-[100px]" />

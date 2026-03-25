@@ -117,7 +117,7 @@ export default function PullRequestScreenShotPopover({
             Take a screenshot of your pull request.
           </PopoverDescription>
         </PopoverHeader>
-        <Card ref={ref} className="shadow-none w-96">
+        <Card ref={ref} className="w-96 shadow-none">
           <CardContent>{children}</CardContent>
         </Card>
         <ButtonGroup className="w-full">
