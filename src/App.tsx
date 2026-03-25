@@ -407,20 +407,27 @@ function App() {
           animate={{ y: "0px", opacity: 1 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
         >
-          {!token &&
-            rateLimit.remaining &&
-            rateLimit.resetTimestamp &&
-            rateLimit.remaining < 100 && (
-              <div className="flex flex-wrap justify-center gap-1">
-                <Badge>{rateLimit.remaining} requests remaining</Badge>
-                <Badge>
-                  Resets at{" "}
-                  {new Date(
-                    rateLimit.resetTimestamp * 1000,
-                  ).toLocaleTimeString()}
-                </Badge>
-              </div>
-            )}
+          <AnimatePresence>
+            {!token &&
+              rateLimit.remaining &&
+              rateLimit.resetTimestamp &&
+              rateLimit.remaining < 100 && (
+                <motion.div
+                  className="-z-10 flex flex-wrap justify-center gap-1"
+                  initial={{ height: 0, marginBottom: 0 }}
+                  animate={{ height: "auto", marginBottom: "12px" }}
+                  exit={{ height: 0, marginBottom: 0 }}
+                >
+                  <Badge>{rateLimit.remaining} requests remaining</Badge>
+                  <Badge>
+                    Resets at{" "}
+                    {new Date(
+                      rateLimit.resetTimestamp * 1000,
+                    ).toLocaleTimeString()}
+                  </Badge>
+                </motion.div>
+              )}
+          </AnimatePresence>
           {/* TODO: I want to animate the height change! */}
           <main className="items-start space-y-2 md:flex md:flex-row md:gap-2">
             {/* shadcn/ui's <Card> uses gap-6 by default, but I don't think framer-motion can handle gap changes when a element is removed */}
@@ -498,6 +505,7 @@ function App() {
                   className="max-w-sm overflow-x-hidden overflow-y-auto *:w-96"
                   initial={{ width: 0, opacity: 0 }}
                   animate={{ width: "auto", opacity: 1 }}
+                  exit={{ width: 0, opacity: 0 }}
                 >
                   <div className="space-y-3">
                     <CardHeader className="font-medium">
