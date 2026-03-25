@@ -198,7 +198,7 @@ export default function PullRequestStatus({
                     };
 
                     return (
-                      <li className="flex justify-between">
+                      <li key={branch.branch} className="flex justify-between">
                         <div className="bg-muted relative rounded px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold">
                           {branch.branch}
                         </div>
