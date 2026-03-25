@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import PullRequestScreenShotPopover from "@/components/PullRequestScreenShotPopover";
@@ -59,7 +60,7 @@ export default function PullRequestStatus({
               </Badge>
             </div>
             {interative && (
-              <div className="flex space-x-1">
+              <ButtonGroup>
                 <PullRequestScreenShotPopover>
                   <PullRequestStatus
                     pullRequestInformation={pullRequestInformation}
@@ -117,7 +118,7 @@ export default function PullRequestStatus({
                     Track
                   </Button>
                 )}
-              </div>
+              </ButtonGroup>
             )}
           </div>
           <h4 className="scroll-m-20 text-xl font-semibold tracking-tight">
