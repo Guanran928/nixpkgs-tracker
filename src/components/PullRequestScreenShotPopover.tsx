@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/popover";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { Card, CardContent } from "@/components/ui/card";
+import { AnimatePresence, motion } from "motion/react";
 
 function useTimedState(duration = 1500) {
   const [active, setActive] = useState(false);
@@ -27,10 +28,6 @@ function useTimedState(duration = 1500) {
   return [active, trigger] as const;
 }
 
-function spanClass(visible: boolean) {
-  return `transition-all duration-200 ${visible ? "blur-0 scale-100 opacity-100" : "scale-80 opacity-0 blur-sm"}`;
-}
-
 function AnimatedButton({
   onClick,
   icon,
@@ -43,9 +40,11 @@ function AnimatedButton({
   doneLabel: string;
 }) {
   const [done, trigger] = useTimedState();
+  const [count, setCount] = useState(0);
 
   async function handleClick() {
     await onClick();
+    setCount((c) => c + 1);
     trigger();
   }
 
@@ -55,14 +54,27 @@ function AnimatedButton({
       onClick={handleClick}
       className="relative flex-1 overflow-hidden"
     >
-      <span className={`flex items-center gap-2 ${spanClass(!done)}`}>
-        {icon} {label}
-      </span>
-      <span
-        className={`absolute inset-0 flex items-center justify-center gap-2 ${spanClass(done)}`}
-      >
-        <Check /> {doneLabel}
-      </span>
+      <AnimatePresence mode="popLayout" initial={false}>
+        <motion.span
+          key={done ? count : "idle"}
+          className="flex items-center gap-2"
+          whileTap={{ scale: 0.97 }}
+          initial={{ opacity: 0, scale: 0.8, filter: "blur(4px)" }}
+          animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+          exit={{ opacity: 0, scale: 0.8, filter: "blur(4px)" }}
+          transition={{ duration: 0.15 }}
+        >
+          {done ? (
+            <>
+              <Check /> {doneLabel}
+            </>
+          ) : (
+            <>
+              {icon} {label}
+            </>
+          )}
+        </motion.span>
+      </AnimatePresence>
     </Button>
   );
 }

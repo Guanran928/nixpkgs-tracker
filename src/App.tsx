@@ -10,6 +10,7 @@ import PullRequestStatusCompact from "@/components/PullRequestStatusCompact";
 import { SettingsDialog } from "@/components/SettingsDialog";
 import { toast } from "sonner";
 import { useCallback, useEffect, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -41,6 +42,7 @@ type PullRequestLookupState = {
 };
 
 const DEFAULT_TITLE = document.title;
+const MotionCard = motion(Card);
 
 function App() {
   useEffect(() => {
@@ -343,7 +345,12 @@ function App() {
   return (
     <>
       <div className="flex h-screen flex-col items-center justify-between p-4 md:p-8">
-        <div className="flex flex-col items-center space-y-3 md:space-y-4">
+        <motion.div
+          className="flex flex-col items-center space-y-3 md:space-y-4"
+          initial={{ y: "20px", opacity: 0 }}
+          animate={{ y: "0px", opacity: 1 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+        >
           {!token &&
             rateLimit.remaining &&
             rateLimit.resetTimestamp &&
@@ -360,7 +367,8 @@ function App() {
             )}
           {/* TODO: I want to animate the height change! */}
           <main className="items-start space-y-2 md:flex md:flex-row md:gap-2">
-            <Card className="w-96 max-w-sm">
+            {/* shadcn/ui's <Card> uses gap-6 by default, but I don't think framer-motion can handle gap changes when a element is removed */}
+            <Card className="w-96 max-w-sm gap-0">
               <CardHeader>
                 <CardTitle>
                   <span className="bg-muted relative rounded px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold">
@@ -400,78 +408,96 @@ function App() {
                 </form>
               </CardHeader>
 
-              {pullRequestLookup.information && (
-                <>
-                  <Separator />
-                  <CardContent>
-                    <PullRequestStatus
-                      pullRequestInformation={pullRequestLookup.information}
-                      pullRequestBranchStatus={pullRequestLookup.branchStatus}
-                      setTrackingPullRequests={setTrackingPullRequests}
-                      tracked={false}
-                      interactive={true}
-                    />
-                  </CardContent>
-                </>
-              )}
+              <AnimatePresence>
+                {pullRequestLookup.information && (
+                  <motion.div
+                    className="overflow-hidden"
+                    initial={{ height: 0, filter: "blur(4px)" }}
+                    animate={{ height: "auto", filter: "blur(0px)" }}
+                    exit={{ height: 0, filter: "blur(4px)" }}
+                  >
+                    {/* HACK: I can't put pt-6 in motion.div, because framer-motion is not getting the correct height that includes the padding... WTF? */}
+                    <div className="space-y-6 pt-6">
+                      <Separator />
+                      <CardContent>
+                        <PullRequestStatus
+                          pullRequestInformation={pullRequestLookup.information}
+                          pullRequestBranchStatus={
+                            pullRequestLookup.branchStatus
+                          }
+                          setTrackingPullRequests={setTrackingPullRequests}
+                          tracked={false}
+                          interactive={true}
+                        />
+                      </CardContent>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </Card>
 
-            {trackingPullRequests.length > 0 && (
-              <Card className="w-96 max-w-sm overflow-y-auto">
-                <div className="space-y-3">
-                  <CardHeader className="font-medium">
-                    <CardTitle className="flex items-center gap-2">
-                      <GitPullRequestArrow />
-                      <h4>Pull requests</h4>
-                    </CardTitle>
-                  </CardHeader>
-                  <Separator />
-                </div>
-                {trackingPullRequests.map((pr) => {
-                  // FIXME: untrack button is not shown in skeleton mode
-                  if (
-                    !pr.pullRequestInformation ||
-                    !pr.pullRequestBranchStatus
-                  ) {
-                    return (
-                      <div
-                        key={pr.pullRequestNumber}
-                        className="mx-6 space-y-1"
-                      >
-                        <div className="flex justify-between gap-2">
-                          <Skeleton className="h-6 w-[100px]" />
-                          <span className="text-muted-foreground font-semibold">
-                            #{pr.pullRequestNumber}
-                          </span>
+            <AnimatePresence>
+              {trackingPullRequests.length > 0 && (
+                <MotionCard
+                  className="max-w-sm overflow-x-hidden overflow-y-auto *:w-96"
+                  initial={{ width: 0, opacity: 0 }}
+                  animate={{ width: "auto", opacity: 1 }}
+                >
+                  <div className="space-y-3">
+                    <CardHeader className="font-medium">
+                      <CardTitle className="flex items-center gap-2">
+                        <GitPullRequestArrow />
+                        <h4>Pull requests</h4>
+                      </CardTitle>
+                    </CardHeader>
+                    <Separator />
+                  </div>
+                  {trackingPullRequests.map((pr) => {
+                    // FIXME: untrack button is not shown in skeleton mode
+                    if (
+                      !pr.pullRequestInformation ||
+                      !pr.pullRequestBranchStatus
+                    ) {
+                      return (
+                        <div
+                          key={pr.pullRequestNumber}
+                          className="px-6 space-y-1"
+                        >
+                          <div className="flex justify-between gap-2">
+                            <Skeleton className="h-6 w-[100px]" />
+                            <span className="text-muted-foreground font-semibold">
+                              #{pr.pullRequestNumber}
+                            </span>
+                          </div>
+                          {trackingPullRequestsFailed.includes(
+                            pr.pullRequestNumber,
+                          ) ? (
+                            <Badge variant="destructive">
+                              Failed to fetch PR data
+                            </Badge>
+                          ) : (
+                            <Skeleton className="h-6 w-full" />
+                          )}
                         </div>
-                        {trackingPullRequestsFailed.includes(
-                          pr.pullRequestNumber,
-                        ) ? (
-                          <Badge variant="destructive">
-                            Failed to fetch PR data
-                          </Badge>
-                        ) : (
-                          <Skeleton className="h-6 w-full" />
-                        )}
-                      </div>
-                    );
-                  }
+                      );
+                    }
 
-                  return (
-                    <CardContent key={pr.pullRequestNumber}>
-                      <PullRequestStatusCompact
-                        pullRequestInformation={pr.pullRequestInformation}
-                        pullRequestBranchStatus={pr.pullRequestBranchStatus}
-                        setTrackingPullRequests={setTrackingPullRequests}
-                        tracked={true}
-                      />
-                    </CardContent>
-                  );
-                })}
-              </Card>
-            )}
+                    return (
+                      <CardContent key={pr.pullRequestNumber}>
+                        <PullRequestStatusCompact
+                          pullRequestInformation={pr.pullRequestInformation}
+                          pullRequestBranchStatus={pr.pullRequestBranchStatus}
+                          setTrackingPullRequests={setTrackingPullRequests}
+                          tracked={true}
+                        />
+                      </CardContent>
+                    );
+                  })}
+                </MotionCard>
+              )}
+            </AnimatePresence>
           </main>
-        </div>
+        </motion.div>
         <footer className="bg-background/50 text-muted-foreground px-4 py-2 text-center text-xs">
           <div>Made with &lt;3 by Guanran Wang</div>
           <div>
