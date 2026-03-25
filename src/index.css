@@ -1,7 +1,12 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "@fontsource-variable/inter";
+@import "@fontsource/iosevka/600.css";
 
 @theme inline {
+  --font-sans: "Inter Variable", sans-serif;
+  --font-mono: "Iosevka", sans-serif;
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);

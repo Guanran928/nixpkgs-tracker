@@ -11,6 +11,8 @@
     "deploy": "pnpm run build && wrangler deploy"
   },
   "dependencies": {
+    "@fontsource-variable/inter": "^5.2.8",
+    "@fontsource/iosevka": "^5.2.5",
     "@octokit/openapi-types": "^27.0.0",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-label": "^2.1.8",
