@@ -28,7 +28,7 @@ export default function PullRequestStatus({
   pullRequestBranchStatus,
   setTrackingPullRequests,
   tracked,
-  interative,
+  interactive,
 }: {
   pullRequestInformation: PullRequestInformation | null;
   pullRequestBranchStatus: PullRequestBranchStatus[] | null;
@@ -36,7 +36,7 @@ export default function PullRequestStatus({
     React.SetStateAction<PullRequestMetadata[]>
   >;
   tracked: boolean;
-  interative: boolean;
+  interactive: boolean;
 }) {
   return (
     <>
@@ -58,7 +58,7 @@ export default function PullRequestStatus({
                 {pullRequestInformation.base.ref}
               </Badge>
             </div>
-            {interative && (
+            {interactive && (
               <div className="flex space-x-1">
                 <PullRequestScreenShotPopover>
                   <PullRequestStatus
@@ -66,7 +66,7 @@ export default function PullRequestStatus({
                     pullRequestBranchStatus={pullRequestBranchStatus}
                     setTrackingPullRequests={setTrackingPullRequests}
                     tracked={false}
-                    interative={false}
+                    interactive={false}
                   />
                 </PullRequestScreenShotPopover>
                 {tracked ? (
