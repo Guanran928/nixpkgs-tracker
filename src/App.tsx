@@ -43,18 +43,9 @@ type PullRequestLookupState = {
 
 const DEFAULT_TITLE = document.title;
 const MotionCard = motion(Card);
+const fetchingPRs = new Set<number>();
 
 function App() {
-  useEffect(() => {
-    const queryString = window.location.search;
-    const urlParams = new URLSearchParams(queryString);
-    const pullRequest = urlParams.get("pr");
-
-    if (pullRequest) {
-      fetchPullRequestStatus();
-    }
-  }, []);
-
   const [token, setToken] = useState(() => {
     return localStorage.getItem("token") || "";
   });
@@ -130,7 +121,7 @@ function App() {
   };
 
   const fetchPullRequestData = useCallback(
-    async (pr: string) => {
+    async (pr: string, signal?: AbortSignal) => {
       const headers: HeadersInit = {
         Accept: "application/vnd.github+json",
       };
@@ -141,7 +132,7 @@ function App() {
 
       const response = await fetch(
         `https://api.github.com/repos/nixos/nixpkgs/pulls/${pr}`,
-        { headers },
+        { headers, signal },
       );
 
       if (!response.ok) {
@@ -155,11 +146,26 @@ function App() {
 
       parseRateLimitHeaders(response.headers);
 
-      const data = (await response.json()) as PullRequestInformation;
+      return (await response.json()) as PullRequestInformation;
+    },
+    [token],
+  );
+
+  const fetchBranchData = useCallback(
+    async (pullRequestData: PullRequestInformation, signal?: AbortSignal) => {
+      const headers: HeadersInit = {
+        Accept: "application/vnd.github+json",
+      };
+
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
 
       let branches;
-      const releaseMatch = data.base.ref.match(/^release-(\d+\.\d+)$/);
-      const releaseStagingMatch = data.base.ref.match(/^staging-(\d+\.\d+)$/);
+      const releaseMatch =
+        pullRequestData.base.ref.match(/^release-(\d+\.\d+)$/);
+      const releaseStagingMatch =
+        pullRequestData.base.ref.match(/^staging-(\d+\.\d+)$/);
 
       if (releaseMatch) {
         const ver = releaseMatch[1];
@@ -178,7 +184,7 @@ function App() {
           `nixpkgs-${ver}-darwin`,
         ];
       } else {
-        switch (data.base.ref) {
+        switch (pullRequestData.base.ref) {
           case "master":
             branches = [
               "nixpkgs-unstable",
@@ -222,8 +228,8 @@ function App() {
       const status = await Promise.all(
         branches.map(async (branch) => {
           const response = await fetch(
-            `https://api.github.com/repos/NixOS/nixpkgs/compare/${branch}...${data.merge_commit_sha}`,
-            { headers },
+            `https://api.github.com/repos/NixOS/nixpkgs/compare/${branch}...${pullRequestData.merge_commit_sha}`,
+            { headers, signal },
           );
 
           if (!response.ok) {
@@ -252,15 +258,12 @@ function App() {
           ...new Set(failed.map((s) => s.message).filter(Boolean)),
         ];
         toast.error(
-          `Failed to fetch ${failed.length}/${branches.length} branches for PR #${pr}`,
+          `Failed to fetch ${failed.length}/${branches.length} branches for PR #${pullRequestData.number}`,
           { description: uniqueMessages.join(", ") },
         );
       }
 
-      return {
-        pullRequestInformation: data,
-        pullRequestBranchStatus: status,
-      };
+      return status;
     },
     [token],
   );
@@ -270,77 +273,130 @@ function App() {
       .filter((pr) => !pr.pullRequestInformation)
       .filter(
         (pr) => !trackingPullRequestsFailed.includes(pr.pullRequestNumber),
-      );
+      )
+      .filter((pr) => !fetchingPRs.has(pr.pullRequestNumber));
 
-    if (prsWithoutData.length > 0) {
-      const fetchAndUpdate = async () => {
-        const newPrData = await Promise.all(
-          prsWithoutData.map(async (pr) => {
-            const data = await fetchPullRequestData(
-              pr.pullRequestNumber.toString(),
-            );
-            if (!data) {
-              setTrackingPullRequestsFailed((prev) => [
-                ...prev,
-                pr.pullRequestNumber,
-              ]);
-            }
-            return data;
-          }),
+    if (prsWithoutData.length === 0) return;
+
+    prsWithoutData.forEach((pr) => fetchingPRs.add(pr.pullRequestNumber));
+
+    Promise.all(
+      prsWithoutData.map(async (pr) => {
+        const data = await fetchPullRequestData(
+          pr.pullRequestNumber.toString(),
         );
+        if (!data) {
+          fetchingPRs.delete(pr.pullRequestNumber);
+          setTrackingPullRequestsFailed((prev) => [
+            ...prev,
+            pr.pullRequestNumber,
+          ]);
+          return null;
+        }
 
-        setTrackingPullRequests((currentPRs) => {
-          const updatedPRs = [...currentPRs];
-          newPrData.forEach((data, index) => {
-            if (data) {
-              const prToUpdateIndex = updatedPRs.findIndex(
-                (p) =>
-                  p.pullRequestNumber ===
-                  prsWithoutData[index].pullRequestNumber,
-              );
-              if (prToUpdateIndex !== -1) {
-                updatedPRs[prToUpdateIndex] = {
-                  ...updatedPRs[prToUpdateIndex],
-                  ...data,
-                };
-              }
-            }
-          });
-          return updatedPRs;
+        setTrackingPullRequests((current) => {
+          const updated = [...current];
+          const i = updated.findIndex(
+            (p) => p.pullRequestNumber === pr.pullRequestNumber,
+          );
+          if (i !== -1)
+            updated[i] = { ...updated[i], pullRequestInformation: data };
+          return updated;
         });
-      };
-      fetchAndUpdate();
-    }
-  }, [trackingPullRequests, fetchPullRequestData]);
 
-  const [pullRequestNumber, setPullRequestNumber] = useState(() => {
-    const queryString = window.location.search;
-    const urlParams = new URLSearchParams(queryString);
-    return urlParams.get("pr") || "";
+        const branchStatus = await fetchBranchData(data);
+        fetchingPRs.delete(pr.pullRequestNumber);
+
+        return { pr, branchStatus };
+      }),
+    ).then((results) => {
+      setTrackingPullRequests((current) => {
+        const updated = [...current];
+        results.forEach((result) => {
+          if (!result) return;
+          const i = updated.findIndex(
+            (p) => p.pullRequestNumber === result.pr.pullRequestNumber,
+          );
+          if (i !== -1)
+            updated[i] = {
+              ...updated[i],
+              pullRequestBranchStatus: result.branchStatus,
+            };
+        });
+        return updated;
+      });
+    });
+  }, [trackingPullRequests, fetchPullRequestData, fetchBranchData]);
+
+  const parsePRNumber = (input: string): string | null => {
+    const match = input.match(/\/pull\/(\d+)/);
+    const pr = match ? match[1] : input.trim();
+    return /^\d+$/.test(pr) && parseInt(pr, 10) > 0 ? pr : null;
+  };
+
+  const [pullRequestNumber, setPullRequestNumber] = useState(""); // input value (typing)
+
+  // initializer
+  const [submittedPR, setSubmittedPR] = useState(() => {
+    const raw = new URLSearchParams(window.location.search).get("pr") || "";
+    return parsePRNumber(raw) ?? "";
   });
 
-  const fetchPullRequestStatus = async () => {
-    const match = pullRequestNumber.match(/\/pull\/(\d+)/);
-    const pr = match ? match[1] : pullRequestNumber;
-
-    const newUrl = `${window.location.pathname}?pr=${pr}`;
-    window.history.pushState({}, "", newUrl);
+  // submit handler
+  const submitPullRequest = () => {
+    const pr = parsePRNumber(pullRequestNumber);
+    if (!pr) {
+      toast.error("Invalid PR number");
+      return;
+    }
+    window.history.pushState({}, "", `${window.location.pathname}?pr=${pr}`);
 
     setPullRequestNumber(pr);
-
-    setPullRequestLookup({
-      isFetching: true,
-      information: null,
-      branchStatus: null,
-    });
-
-    const data = await fetchPullRequestData(pr);
-    setPullRequestLookup({
-      isFetching: false,
-      information: data?.pullRequestInformation ?? null,
-      branchStatus: data?.pullRequestBranchStatus ?? null,
-    });
+    setSubmittedPR(pr);
   };
+
+  useEffect(() => {
+    if (!submittedPR) return;
+    const controller = new AbortController();
+
+    const run = async () => {
+      setPullRequestLookup({
+        isFetching: true,
+        information: null,
+        branchStatus: null,
+      });
+
+      const prInfo = await fetchPullRequestData(submittedPR, controller.signal);
+      if (controller.signal.aborted) return;
+
+      if (!prInfo) {
+        setPullRequestLookup({
+          isFetching: false,
+          information: null,
+          branchStatus: null,
+        });
+        return;
+      } else {
+        setPullRequestLookup({
+          isFetching: true,
+          information: prInfo,
+          branchStatus: null,
+        });
+      }
+
+      const branchStatus = await fetchBranchData(prInfo, controller.signal);
+      if (controller.signal.aborted) return;
+
+      setPullRequestLookup({
+        isFetching: false,
+        information: prInfo,
+        branchStatus,
+      });
+    };
+
+    run();
+    return () => controller.abort();
+  }, [submittedPR]);
 
   return (
     <>
@@ -389,7 +445,7 @@ function App() {
                   className="col-span-2 flex gap-2"
                   onSubmit={(e) => {
                     e.preventDefault();
-                    fetchPullRequestStatus();
+                    submitPullRequest();
                   }}
                 >
                   <Input
