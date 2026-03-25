@@ -410,7 +410,7 @@ function App() {
         >
           <AnimatePresence>
             {!token &&
-              rateLimit.remaining &&
+              rateLimit.remaining != null &&
               rateLimit.resetTimestamp &&
               rateLimit.remaining < 100 && (
                 <motion.div
@@ -419,7 +419,7 @@ function App() {
                   animate={{ height: "auto", marginBottom: "12px" }}
                   exit={{ height: 0, marginBottom: 0 }}
                 >
-                  <Badge>
+                  <Badge variant={rateLimit.remaining == 0 ? "destructive" : "default"}>
                     <NumberFlow value={rateLimit.remaining} /> requests
                     remaining
                   </Badge>
