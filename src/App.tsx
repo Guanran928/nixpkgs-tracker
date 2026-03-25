@@ -11,6 +11,7 @@ import { SettingsDialog } from "@/components/SettingsDialog";
 import { toast } from "sonner";
 import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
+import NumberFlow from "@number-flow/react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -418,7 +419,10 @@ function App() {
                   animate={{ height: "auto", marginBottom: "12px" }}
                   exit={{ height: 0, marginBottom: 0 }}
                 >
-                  <Badge>{rateLimit.remaining} requests remaining</Badge>
+                  <Badge>
+                    <NumberFlow value={rateLimit.remaining} /> requests
+                    remaining
+                  </Badge>
                   <Badge>
                     Resets at{" "}
                     {new Date(
