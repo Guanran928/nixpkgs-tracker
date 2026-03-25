@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import PullRequestScreenShotPopover from "@/components/PullRequestScreenShotPopover";
 
 type PullRequestInformation = components["schemas"]["pull-request"];
 
@@ -27,6 +28,7 @@ export default function PullRequestStatus({
   pullRequestBranchStatus,
   setTrackingPullRequests,
   tracked,
+  interative,
 }: {
   pullRequestInformation: PullRequestInformation | null;
   pullRequestBranchStatus: PullRequestBranchStatus[] | null;
@@ -34,6 +36,7 @@ export default function PullRequestStatus({
     React.SetStateAction<PullRequestMetadata[]>
   >;
   tracked: boolean;
+  interative: boolean;
 }) {
   return (
     <>
@@ -55,51 +58,66 @@ export default function PullRequestStatus({
                 {pullRequestInformation.base.ref}
               </Badge>
             </div>
-            {tracked ? (
-              <Button
-                variant="outline"
-                size="xs"
-                onClick={() => {
-                  setTrackingPullRequests((currentTracking) =>
-                    currentTracking.filter(
-                      (pr) =>
-                        pr.pullRequestNumber !== pullRequestInformation.number,
-                    ),
-                  );
-                  toast.success(
-                    `Stopped tracking PR #${pullRequestInformation.number}`,
-                  );
-                }}
-              >
-                <BellOff />
-                Untrack
-              </Button>
-            ) : (
-              <Button
-                variant="outline"
-                size="xs"
-                onClick={() => {
-                  setTrackingPullRequests((currentTracking) => {
-                    const alreadyExists = currentTracking.find(
-                      (obj) =>
-                        obj.pullRequestNumber === pullRequestInformation.number,
-                    );
+            {interative && (
+              <div className="flex space-x-1">
+                <PullRequestScreenShotPopover>
+                  <PullRequestStatus
+                    pullRequestInformation={pullRequestInformation}
+                    pullRequestBranchStatus={pullRequestBranchStatus}
+                    setTrackingPullRequests={setTrackingPullRequests}
+                    tracked={false}
+                    interative={false}
+                  />
+                </PullRequestScreenShotPopover>
+                {tracked ? (
+                  <Button
+                    variant="outline"
+                    size="xs"
+                    onClick={() => {
+                      setTrackingPullRequests((currentTracking) =>
+                        currentTracking.filter(
+                          (pr) =>
+                            pr.pullRequestNumber !==
+                            pullRequestInformation.number,
+                        ),
+                      );
+                      toast.success(
+                        `Stopped tracking PR #${pullRequestInformation.number}`,
+                      );
+                    }}
+                  >
+                    <BellOff />
+                    Untrack
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="xs"
+                    onClick={() => {
+                      setTrackingPullRequests((currentTracking) => {
+                        const alreadyExists = currentTracking.find(
+                          (obj) =>
+                            obj.pullRequestNumber ===
+                            pullRequestInformation.number,
+                        );
 
-                    if (alreadyExists) {
-                      toast("Pull request is already being tracked!");
-                      return currentTracking;
-                    } else {
-                      const newItem = {
-                        pullRequestNumber: pullRequestInformation.number,
-                      } as PullRequestMetadata;
-                      return [...currentTracking, newItem];
-                    }
-                  });
-                }}
-              >
-                <BellRing />
-                Track
-              </Button>
+                        if (alreadyExists) {
+                          toast("Pull request is already being tracked!");
+                          return currentTracking;
+                        } else {
+                          const newItem = {
+                            pullRequestNumber: pullRequestInformation.number,
+                          } as PullRequestMetadata;
+                          return [...currentTracking, newItem];
+                        }
+                      });
+                    }}
+                  >
+                    <BellRing />
+                    Track
+                  </Button>
+                )}
+              </div>
             )}
           </div>
           <h4 className="scroll-m-20 text-xl font-semibold tracking-tight">

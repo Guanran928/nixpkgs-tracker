@@ -409,6 +409,7 @@ function App() {
                       pullRequestBranchStatus={pullRequestLookup.branchStatus}
                       setTrackingPullRequests={setTrackingPullRequests}
                       tracked={false}
+                      interative={true}
                     />
                   </CardContent>
                 </>
