@@ -12,6 +12,7 @@ import { useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AnimatePresence, motion } from "motion/react";
 
 type PullRequestInformation = components["schemas"]["pull-request"];
 
@@ -53,9 +54,16 @@ export default function PullRequestStatusCompact({
 
           {pullRequestInformation.state == "closed" && (
             <div className="relative">
-              {overflowLeft && (
-                <div className="from-card pointer-events-none absolute inset-y-0 left-0 w-6 bg-linear-to-r to-transparent" />
-              )}
+              <AnimatePresence>
+                {overflowLeft && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="from-card pointer-events-none absolute inset-y-0 left-0 w-6 bg-linear-to-r to-transparent"
+                  />
+                )}
+              </AnimatePresence>
 
               <ul
                 className="no-scrollbar flex space-x-1 overflow-x-auto whitespace-nowrap"
@@ -126,9 +134,16 @@ export default function PullRequestStatusCompact({
                 )}
               </ul>
 
-              {overflowRight && (
-                <div className="from-card pointer-events-none absolute inset-y-0 right-0 w-6 bg-linear-to-l to-transparent" />
-              )}
+              <AnimatePresence>
+                {overflowRight && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="from-card pointer-events-none absolute inset-y-0 right-0 w-6 bg-linear-to-l to-transparent"
+                  />
+                )}
+              </AnimatePresence>
             </div>
           )}
 
