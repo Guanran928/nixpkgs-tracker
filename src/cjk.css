@@ -1,0 +1,70 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Original work by Coelacanthus:
+ * https://userstyles.world/style/24689/enable-cjk-text-layout-features
+ */
+
+@supports (text-autospace: replace) {
+  body {
+    text-autospace: ideograph-alpha ideograph-numeric replace;
+  }
+}
+
+@supports (not (text-autospace: replace)) and (text-autospace: insert) and
+  (text-autospace: normal) {
+  body {
+    text-autospace: normal;
+  }
+}
+
+@supports (text-autospace: no-autospace) {
+  pre,
+  code,
+  pre > code,
+  samp,
+  kbd,
+  tt,
+  var {
+    text-autospace: no-autospace;
+  }
+}
+
+@supports (text-spacing-trim: normal) {
+  body {
+    text-spacing-trim: normal;
+  }
+  pre,
+  code,
+  pre > code,
+  samp,
+  kbd,
+  tt,
+  var {
+    text-spacing-trim: space-all;
+  }
+}
+
+@supports (hanging-punctuation: first) and (hanging-punctuation: allow-end) and
+  selector(:lang(zh)) {
+  body:lang(zh, ja, ko) {
+    hanging-punctuation: allow-end;
+  }
+  pre,
+  code,
+  pre > code,
+  samp,
+  kbd,
+  tt,
+  var {
+    hanging-punctuation: none;
+  }
+}
+
+@supports (word-break: auto-phrase) {
+  body {
+    word-break: auto-phrase;
+  }
+}
