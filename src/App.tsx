@@ -419,7 +419,11 @@ function App() {
                   animate={{ height: "auto", marginBottom: "12px" }}
                   exit={{ height: 0, marginBottom: 0 }}
                 >
-                  <Badge variant={rateLimit.remaining == 0 ? "destructive" : "default"}>
+                  <Badge
+                    variant={
+                      rateLimit.remaining == 0 ? "destructive" : "default"
+                    }
+                  >
                     <NumberFlow value={rateLimit.remaining} /> requests
                     remaining
                   </Badge>
