@@ -9,7 +9,7 @@ import PullRequestStatus from "@/components/PullRequestStatus";
 import PullRequestStatusCompact from "@/components/PullRequestStatusCompact";
 import { SettingsDialog } from "@/components/SettingsDialog";
 import { toast } from "sonner";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import NumberFlow from "@number-flow/react";
 
@@ -122,7 +122,7 @@ function App() {
   };
 
   const fetchPullRequestData = useCallback(
-    async (pr: string, signal?: AbortSignal) => {
+    async (pullRequestNumber: number, signal?: AbortSignal) => {
       const headers: HeadersInit = {
         Accept: "application/vnd.github+json",
       };
@@ -132,13 +132,13 @@ function App() {
       }
 
       const response = await fetch(
-        `https://api.github.com/repos/nixos/nixpkgs/pulls/${pr}`,
+        `https://api.github.com/repos/nixos/nixpkgs/pulls/${pullRequestNumber}`,
         { headers, signal },
       );
 
       if (!response.ok) {
         const data = (await response.json()) as GitHubErrorResponse;
-        toast.error(`Error while fetching PR #${pr}`, {
+        toast.error(`Error while fetching PR #${pullRequestNumber}`, {
           description: data.message,
         });
 
@@ -283,9 +283,7 @@ function App() {
 
     Promise.all(
       prsWithoutData.map(async (pr) => {
-        const data = await fetchPullRequestData(
-          pr.pullRequestNumber.toString(),
-        );
+        const data = await fetchPullRequestData(pr.pullRequestNumber);
         if (!data) {
           fetchingPRs.delete(pr.pullRequestNumber);
           setTrackingPullRequestsFailed((prev) => [
@@ -329,75 +327,69 @@ function App() {
     });
   }, [trackingPullRequests, fetchPullRequestData, fetchBranchData]);
 
-  const parsePRNumber = (input: string): string | null => {
-    const match = input.match(/\/pull\/(\d+)/);
-    const pr = match ? match[1] : input.trim();
-    return /^\d+$/.test(pr) && parseInt(pr, 10) > 0 ? pr : null;
-  };
+  const [pullRequestNumberInput, setPullRequestNumberInput] = useState("");
 
-  const [pullRequestNumber, setPullRequestNumber] = useState(""); // input value (typing)
+  useEffect(() => {
+    const pullRequestString = new URLSearchParams(window.location.search).get(
+      "pr",
+    );
+    if (!pullRequestString) return;
+    const pullRequestNumber = parseInt(pullRequestString, 10);
 
-  // initializer
-  const [submittedPR, setSubmittedPR] = useState(() => {
-    const raw = new URLSearchParams(window.location.search).get("pr") || "";
-    return parsePRNumber(raw) ?? "";
-  });
+    controllerRef.current?.abort();
+    controllerRef.current = new AbortController();
+    setPullRequestNumberInput(pullRequestString);
+    submitPullRequest(pullRequestNumber, controllerRef.current.signal);
+  }, []);
 
   // submit handler
-  const submitPullRequest = () => {
-    const pr = parsePRNumber(pullRequestNumber);
-    if (!pr) {
+  const controllerRef = useRef<AbortController | null>(null);
+  const submitPullRequest = async (
+    pullRequestNumber: number,
+    signal?: AbortSignal,
+  ) => {
+    if (!pullRequestNumber || pullRequestNumber < 100) {
       toast.error("Invalid PR number");
       return;
     }
-    window.history.pushState({}, "", `${window.location.pathname}?pr=${pr}`);
 
-    setPullRequestNumber(pr);
-    setSubmittedPR(pr);
-  };
+    window.history.pushState(
+      {},
+      "",
+      `${window.location.pathname}?pr=${pullRequestNumber}`,
+    );
+    setPullRequestNumberInput(pullRequestNumber.toString());
+    setPullRequestLookup({
+      isFetching: true,
+      information: null,
+      branchStatus: null,
+    });
 
-  useEffect(() => {
-    if (!submittedPR) return;
-    const controller = new AbortController();
-
-    const run = async () => {
+    const information = await fetchPullRequestData(pullRequestNumber, signal);
+    if (!information || signal?.aborted) {
       setPullRequestLookup({
-        isFetching: true,
+        isFetching: false,
         information: null,
         branchStatus: null,
       });
+      return;
+    }
 
-      const prInfo = await fetchPullRequestData(submittedPR, controller.signal);
-      if (controller.signal.aborted) return;
+    setPullRequestLookup({
+      isFetching: false,
+      information,
+      branchStatus: null,
+    });
 
-      if (!prInfo) {
-        setPullRequestLookup({
-          isFetching: false,
-          information: null,
-          branchStatus: null,
-        });
-        return;
-      } else {
-        setPullRequestLookup({
-          isFetching: true,
-          information: prInfo,
-          branchStatus: null,
-        });
-      }
+    const branchStatus = await fetchBranchData(information, signal);
+    if (signal?.aborted) return;
 
-      const branchStatus = await fetchBranchData(prInfo, controller.signal);
-      if (controller.signal.aborted) return;
-
-      setPullRequestLookup({
-        isFetching: false,
-        information: prInfo,
-        branchStatus,
-      });
-    };
-
-    run();
-    return () => controller.abort();
-  }, [submittedPR]);
+    setPullRequestLookup({
+      isFetching: false,
+      information,
+      branchStatus,
+    });
+  };
 
   return (
     <>
@@ -460,7 +452,19 @@ function App() {
                   className="col-span-2 flex gap-2"
                   onSubmit={(e) => {
                     e.preventDefault();
-                    submitPullRequest();
+
+                    const match = pullRequestNumberInput.match(/\/pull\/(\d+)/);
+                    const pullRequestString = match
+                      ? match[1]
+                      : pullRequestNumberInput.trim();
+                    const pullRequestNumber = parseInt(pullRequestString, 10);
+
+                    controllerRef.current?.abort();
+                    controllerRef.current = new AbortController();
+                    submitPullRequest(
+                      pullRequestNumber,
+                      controllerRef.current.signal,
+                    );
                   }}
                 >
                   <Input
@@ -468,9 +472,9 @@ function App() {
                     type="text"
                     id="pull"
                     placeholder="e.g. 449457"
-                    value={pullRequestNumber}
+                    value={pullRequestNumberInput}
                     className="w-full"
-                    onChange={(e) => setPullRequestNumber(e.target.value)}
+                    onChange={(e) => setPullRequestNumberInput(e.target.value)}
                   />
                   <Button disabled={pullRequestLookup.isFetching} type="submit">
                     {pullRequestLookup.isFetching && <Spinner />}
