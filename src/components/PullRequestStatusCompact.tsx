@@ -180,7 +180,7 @@ export default function PullRequestStatusCompact({
                     );
 
                     if (alreadyExists) {
-                      toast("Pull request is already being tracked!");
+                      toast("Pull request is already being tracked");
                       return currentTracking;
                     } else {
                       const newItem = {

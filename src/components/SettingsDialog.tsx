@@ -38,7 +38,7 @@ export function SettingsDialog({
             e.preventDefault();
             localStorage.setItem("token", token);
             setIsOpen(false);
-            toast("GitHub token saved in browser localStorage.");
+            toast("Settings saved in browser localStorage");
           }}
         >
           <DialogHeader>
