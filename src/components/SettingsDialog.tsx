@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Settings } from "lucide-react";
 import { toast } from "sonner";
+import { useSettings } from "@/context/SettingsContext";
 
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -16,14 +17,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-export function SettingsDialog({
-  token,
-  setToken,
-}: {
-  token: string;
-  setToken: (t: string) => void;
-}) {
+export function SettingsDialog() {
+  const { settings, updateSettings } = useSettings();
   const [isOpen, setIsOpen] = useState(false);
+  const [token, setToken] = useState(settings.token ?? "");
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -36,8 +34,8 @@ export function SettingsDialog({
           className="space-y-4"
           onSubmit={(e) => {
             e.preventDefault();
-            localStorage.setItem("token", token);
             setIsOpen(false);
+            updateSettings({ token: token.trim() || null });
             toast("Settings saved in browser localStorage");
           }}
         >

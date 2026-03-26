@@ -4,14 +4,16 @@ import type {
 } from "./components/PullRequestStatus";
 import type { components } from "@octokit/openapi-types";
 
-import { GitPullRequestArrow } from "lucide-react";
 import PullRequestStatus from "@/components/PullRequestStatus";
 import PullRequestStatusCompact from "@/components/PullRequestStatusCompact";
 import { SettingsDialog } from "@/components/SettingsDialog";
+import { useSettings } from "@/context/SettingsContext";
+
+import NumberFlow from "@number-flow/react";
+import { AnimatePresence, motion } from "motion/react";
+import { GitPullRequestArrow } from "lucide-react";
 import { toast } from "sonner";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
-import NumberFlow from "@number-flow/react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -47,9 +49,7 @@ const MotionCard = motion.create(Card);
 const fetchingPRs = new Set<number>();
 
 function App() {
-  const [token, setToken] = useState(() => {
-    return localStorage.getItem("token") || "";
-  });
+  const { settings } = useSettings();
 
   const [rateLimit, setRateLimit] = useState<RateLimitState>({
     remaining: null,
@@ -84,7 +84,7 @@ function App() {
 
   useEffect(() => {
     setRateLimit({ remaining: null, resetTimestamp: null });
-  }, [token]);
+  }, [settings.token]);
 
   useEffect(() => {
     localStorage.setItem(
@@ -127,8 +127,8 @@ function App() {
         Accept: "application/vnd.github+json",
       };
 
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
+      if (settings.token) {
+        headers["Authorization"] = `Bearer ${settings.token}`;
       }
 
       const response = await fetch(
@@ -149,7 +149,7 @@ function App() {
 
       return (await response.json()) as PullRequestInformation;
     },
-    [token],
+    [settings.token],
   );
 
   const fetchBranchData = useCallback(
@@ -158,8 +158,8 @@ function App() {
         Accept: "application/vnd.github+json",
       };
 
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
+      if (settings.token) {
+        headers["Authorization"] = `Bearer ${settings.token}`;
       }
 
       let branches;
@@ -266,7 +266,7 @@ function App() {
 
       return status;
     },
-    [token],
+    [settings.token],
   );
 
   useEffect(() => {
@@ -401,7 +401,7 @@ function App() {
           transition={{ duration: 0.8, ease: "easeOut" }}
         >
           <AnimatePresence>
-            {!token &&
+            {!settings.token &&
               rateLimit.remaining != null &&
               rateLimit.resetTimestamp &&
               rateLimit.remaining < 100 && (
@@ -445,7 +445,7 @@ function App() {
                 </CardDescription>
 
                 <CardAction>
-                  <SettingsDialog token={token} setToken={setToken} />
+                  <SettingsDialog />
                 </CardAction>
 
                 <form
