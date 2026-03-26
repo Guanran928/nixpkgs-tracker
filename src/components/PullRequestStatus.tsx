@@ -1,13 +1,12 @@
 import type { components } from "@octokit/openapi-types";
 
-import { BellRing, BellOff, Check, CircleAlert } from "lucide-react";
-import { toast } from "sonner";
+import { Check, CircleAlert } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import PullRequestScreenShotPopover from "@/components/PullRequestScreenShotPopover";
+import TrackPullRequestButton from "@/components/TrackPullRequestButton";
 
 type PullRequestInformation = components["schemas"]["pull-request"];
 
@@ -24,12 +23,14 @@ export interface PullRequestMetadata {
 }
 
 export default function PullRequestStatus({
+  pullRequestNumber,
   pullRequestInformation,
   pullRequestBranchStatus,
   setTrackingPullRequests,
   tracked,
   interactive,
 }: {
+  pullRequestNumber: number;
   pullRequestInformation: PullRequestInformation | null;
   pullRequestBranchStatus: PullRequestBranchStatus[] | null;
   setTrackingPullRequests: React.Dispatch<
@@ -62,6 +63,7 @@ export default function PullRequestStatus({
               <div className="flex space-x-1">
                 <PullRequestScreenShotPopover>
                   <PullRequestStatus
+                    pullRequestNumber={pullRequestNumber}
                     pullRequestInformation={pullRequestInformation}
                     pullRequestBranchStatus={pullRequestBranchStatus}
                     setTrackingPullRequests={setTrackingPullRequests}
@@ -69,54 +71,12 @@ export default function PullRequestStatus({
                     interactive={false}
                   />
                 </PullRequestScreenShotPopover>
-                {tracked ? (
-                  <Button
-                    variant="outline"
-                    size="xs"
-                    onClick={() => {
-                      setTrackingPullRequests((currentTracking) =>
-                        currentTracking.filter(
-                          (pr) =>
-                            pr.pullRequestNumber !==
-                            pullRequestInformation.number,
-                        ),
-                      );
-                      toast.success(
-                        `Stopped tracking PR #${pullRequestInformation.number}`,
-                      );
-                    }}
-                  >
-                    <BellOff />
-                    Untrack
-                  </Button>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="xs"
-                    onClick={() => {
-                      setTrackingPullRequests((currentTracking) => {
-                        const alreadyExists = currentTracking.find(
-                          (obj) =>
-                            obj.pullRequestNumber ===
-                            pullRequestInformation.number,
-                        );
-
-                        if (alreadyExists) {
-                          toast("Pull request is already being tracked!");
-                          return currentTracking;
-                        } else {
-                          const newItem = {
-                            pullRequestNumber: pullRequestInformation.number,
-                          } as PullRequestMetadata;
-                          return [...currentTracking, newItem];
-                        }
-                      });
-                    }}
-                  >
-                    <BellRing />
-                    Track
-                  </Button>
-                )}
+                <TrackPullRequestButton
+                  tracked={tracked}
+                  iconOnly={false}
+                  pullRequestNumber={pullRequestNumber}
+                  setTrackingPullRequests={setTrackingPullRequests}
+                />
               </div>
             )}
           </div>

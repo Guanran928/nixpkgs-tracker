@@ -28,7 +28,6 @@ import {
   CardDescription,
   CardAction,
 } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 
 type PullRequestInformation = components["schemas"]["pull-request"];
 type GitHubErrorResponse = components["schemas"]["basic-error"];
@@ -496,6 +495,9 @@ function App() {
                       <Separator />
                       <CardContent>
                         <PullRequestStatus
+                          pullRequestNumber={
+                            pullRequestLookup.information.number
+                          }
                           pullRequestInformation={pullRequestLookup.information}
                           pullRequestBranchStatus={
                             pullRequestLookup.branchStatus
@@ -529,41 +531,16 @@ function App() {
                     <Separator />
                   </div>
                   {trackingPullRequests.map((pr) => {
-                    // FIXME: untrack button is not shown in skeleton mode
-                    if (
-                      !pr.pullRequestInformation ||
-                      !pr.pullRequestBranchStatus
-                    ) {
-                      return (
-                        <div
-                          key={pr.pullRequestNumber}
-                          className="space-y-1 px-6"
-                        >
-                          <div className="flex justify-between gap-2">
-                            <Skeleton className="h-6 w-[100px]" />
-                            <span className="text-muted-foreground font-semibold">
-                              #{pr.pullRequestNumber}
-                            </span>
-                          </div>
-                          {trackingPullRequestsFailed.includes(
-                            pr.pullRequestNumber,
-                          ) ? (
-                            <Badge variant="destructive">
-                              Failed to fetch PR data
-                            </Badge>
-                          ) : (
-                            <Skeleton className="h-6 w-full" />
-                          )}
-                        </div>
-                      );
-                    }
-
                     return (
                       <CardContent key={pr.pullRequestNumber}>
                         <PullRequestStatusCompact
+                          pullRequestNumber={pr.pullRequestNumber}
                           pullRequestInformation={pr.pullRequestInformation}
                           pullRequestBranchStatus={pr.pullRequestBranchStatus}
                           setTrackingPullRequests={setTrackingPullRequests}
+                          trackingPullRequestsFailed={
+                            trackingPullRequestsFailed
+                          }
                           tracked={true}
                         />
                       </CardContent>

@@ -4,199 +4,155 @@ import type {
 } from "./PullRequestStatus";
 import type { components } from "@octokit/openapi-types";
 
+import TrackPullRequestButton from "./TrackPullRequestButton";
+
 import { useIsOverflowing } from "@/hooks/use-is-overflowing";
-import { BellRing, BellOff, Check, CircleAlert } from "lucide-react";
-import { toast } from "sonner";
-import { useRef } from "react";
+import { Check, CircleAlert } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimatePresence, motion } from "motion/react";
 
 type PullRequestInformation = components["schemas"]["pull-request"];
 
 export default function PullRequestStatusCompact({
+  pullRequestNumber,
   pullRequestInformation,
   pullRequestBranchStatus,
+  trackingPullRequestsFailed,
   setTrackingPullRequests,
   tracked,
 }: {
+  pullRequestNumber: number;
   pullRequestInformation: PullRequestInformation | null;
   pullRequestBranchStatus: PullRequestBranchStatus[] | null;
+  trackingPullRequestsFailed: number[];
   setTrackingPullRequests: React.Dispatch<
     React.SetStateAction<PullRequestMetadata[]>
   >;
   tracked: boolean;
 }) {
-  const ref = useRef(null);
-  const { overflowLeft, overflowRight } = useIsOverflowing(ref);
+  const { ref, overflowLeft, overflowRight } = useIsOverflowing();
 
   return (
-    <>
-      {pullRequestInformation && (
-        <div className="group relative" tabIndex={0}>
-          <h4 className="flex scroll-m-20 justify-between font-semibold tracking-tight">
-            <a
-              href={pullRequestInformation.html_url}
-              className="decoration-opacity-0 hover:decoration-opacity-100 break-all underline decoration-transparent transition-colors duration-200 ease-in-out hover:decoration-current"
+    <div className="group relative" tabIndex={0}>
+      <h4 className="flex scroll-m-20 justify-between font-semibold tracking-tight">
+        {pullRequestInformation ? (
+          <a
+            href={pullRequestInformation.html_url}
+            className="decoration-opacity-0 hover:decoration-opacity-100 break-all underline decoration-transparent transition-colors duration-200 ease-in-out hover:decoration-current"
+          >
+            {pullRequestInformation.title}
+          </a>
+        ) : (
+          <Skeleton className="h-5 w-[160px]" />
+        )}
+        <span className="text-muted-foreground">#{pullRequestNumber}</span>
+      </h4>
+
+      <div className="relative">
+        <AnimatePresence>
+          {overflowLeft && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="from-card pointer-events-none absolute inset-y-0 left-0 w-6 bg-linear-to-r to-transparent"
+            />
+          )}
+        </AnimatePresence>
+
+        {!trackingPullRequestsFailed.includes(pullRequestNumber) &&
+          !pullRequestBranchStatus &&
+          pullRequestInformation?.state != "open" && (
+            <Skeleton className="h-6 w-full" />
+          )}
+
+        {trackingPullRequestsFailed.includes(pullRequestNumber) && (
+          <Badge variant="destructive">Failed to fetch PR data</Badge>
+        )}
+
+        {pullRequestInformation?.state == "open" && (
+          <Badge variant="secondary">Not merged</Badge>
+        )}
+
+        {pullRequestInformation?.state == "closed" && (
+          <>
+            <ul
+              className="no-scrollbar flex space-x-1 overflow-x-auto whitespace-nowrap"
+              style={{ scrollbarWidth: "none" }}
+              ref={ref}
             >
-              {pullRequestInformation.title}
-            </a>{" "}
-            <span className="text-muted-foreground">
-              #{pullRequestInformation.number}
-            </span>
-          </h4>
-
-          {pullRequestInformation.state == "open" && (
-            <Badge variant="secondary">Not merged</Badge>
-          )}
-
-          {pullRequestInformation.state == "closed" && (
-            <div className="relative">
-              <AnimatePresence>
-                {overflowLeft && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="from-card pointer-events-none absolute inset-y-0 left-0 w-6 bg-linear-to-r to-transparent"
-                  />
-                )}
-              </AnimatePresence>
-
-              <ul
-                className="no-scrollbar flex space-x-1 overflow-x-auto whitespace-nowrap"
-                style={{ scrollbarWidth: "none" }}
-                ref={ref}
-              >
-                {pullRequestBranchStatus ? (
-                  // merged branches are sorted to the front
-                  (() => {
-                    const merged = pullRequestBranchStatus.filter(
-                      (b) => b.status === "merged",
-                    );
-                    const others = pullRequestBranchStatus.filter(
-                      (b) => b.status !== "merged",
-                    );
-
-                    const getVariant = (
-                      status: PullRequestBranchStatus["status"],
-                    ) => {
-                      switch (status) {
-                        case "merged":
-                          return "default";
-                        case "not-merged":
-                          return "secondary";
-                        case "fetch-error":
-                          return "destructive";
-                      }
-                    };
-
-                    const getIcon = (
-                      status: PullRequestBranchStatus["status"],
-                    ) => {
-                      switch (status) {
-                        case "merged":
-                          return <Check />;
-                        case "not-merged":
-                          return <></>;
-                        case "fetch-error":
-                          return <CircleAlert />;
-                      }
-                    };
-
-                    return [...merged, ...others].map((branch) => (
-                      <li key={branch.branch}>
-                        <Badge variant={getVariant(branch.status)}>
-                          {getIcon(branch.status)}
-                          {branch.branch}
-                        </Badge>
-                      </li>
-                    ));
-                  })()
-                ) : (
-                  // FIXME
-                  <>
-                    <div className="flex justify-between">
-                      <Skeleton className="h-6 w-[120px]" />
-                      <Skeleton className="h-6 w-[60px]" />
-                    </div>
-                    <div className="flex justify-between">
-                      <Skeleton className="h-6 w-[100px]" />
-                      <Skeleton className="h-6 w-[80px]" />
-                    </div>
-                    <div className="flex justify-between">
-                      <Skeleton className="h-6 w-[140px]" />
-                      <Skeleton className="h-6 w-[60px]" />
-                    </div>
-                  </>
-                )}
-              </ul>
-
-              <AnimatePresence>
-                {overflowRight && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="from-card pointer-events-none absolute inset-y-0 right-0 w-6 bg-linear-to-l to-transparent"
-                  />
-                )}
-              </AnimatePresence>
-            </div>
-          )}
-
-          {/* Track & Untrack */}
-          {/* FIXME: this is not really working on mobile */}
-          <div className="bg-background absolute top-1/2 right-2 -translate-y-1/2 rounded-md opacity-0 transition duration-75 group-focus-within:opacity-100 group-hover:opacity-100">
-            {tracked ? (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setTrackingPullRequests((currentTracking) =>
-                    currentTracking.filter(
-                      (pr) =>
-                        pr.pullRequestNumber !== pullRequestInformation.number,
-                    ),
+              {pullRequestBranchStatus &&
+                // merged branches are sorted to the front
+                (() => {
+                  const merged = pullRequestBranchStatus.filter(
+                    (b) => b.status === "merged",
                   );
-                  toast.success(
-                    `Stopped tracking PR #${pullRequestInformation.number}`,
+                  const others = pullRequestBranchStatus.filter(
+                    (b) => b.status !== "merged",
                   );
-                }}
-              >
-                <BellOff />
-              </Button>
-            ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setTrackingPullRequests((currentTracking) => {
-                    const alreadyExists = currentTracking.find(
-                      (obj) =>
-                        obj.pullRequestNumber === pullRequestInformation.number,
-                    );
 
-                    if (alreadyExists) {
-                      toast("Pull request is already being tracked");
-                      return currentTracking;
-                    } else {
-                      const newItem = {
-                        pullRequestNumber: pullRequestInformation.number,
-                      } as PullRequestMetadata;
-                      return [...currentTracking, newItem];
+                  const getVariant = (
+                    status: PullRequestBranchStatus["status"],
+                  ) => {
+                    switch (status) {
+                      case "merged":
+                        return "default";
+                      case "not-merged":
+                        return "secondary";
+                      case "fetch-error":
+                        return "destructive";
                     }
-                  });
-                }}
-              >
-                <BellRing />
-              </Button>
-            )}
-          </div>
-        </div>
-      )}
-    </>
+                  };
+
+                  const getIcon = (
+                    status: PullRequestBranchStatus["status"],
+                  ) => {
+                    switch (status) {
+                      case "merged":
+                        return <Check />;
+                      case "not-merged":
+                        return <></>;
+                      case "fetch-error":
+                        return <CircleAlert />;
+                    }
+                  };
+
+                  return [...merged, ...others].map((branch) => (
+                    <li key={branch.branch}>
+                      <Badge variant={getVariant(branch.status)}>
+                        {getIcon(branch.status)}
+                        {branch.branch}
+                      </Badge>
+                    </li>
+                  ));
+                })()}
+            </ul>
+          </>
+        )}
+
+        <AnimatePresence>
+          {overflowRight && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="from-card pointer-events-none absolute inset-y-0 right-0 w-6 bg-linear-to-l to-transparent"
+            />
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Track & Untrack */}
+      <div className="bg-background absolute top-1/2 right-2 -translate-y-1/2 rounded-md opacity-0 transition duration-75 group-focus-within:opacity-100 group-hover:opacity-100">
+        <TrackPullRequestButton
+          tracked={tracked}
+          iconOnly={true}
+          pullRequestNumber={pullRequestNumber}
+          setTrackingPullRequests={setTrackingPullRequests}
+        />
+      </div>
+    </div>
   );
 }

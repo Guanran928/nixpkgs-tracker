@@ -1,13 +1,12 @@
-import { useEffect, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
-export function useIsOverflowing<T extends HTMLElement>(
-  ref: React.RefObject<T | null>,
-) {
+export function useIsOverflowing<T extends HTMLElement>() {
   const [overflowLeft, setOverflowLeft] = useState(false);
   const [overflowRight, setOverflowRight] = useState(false);
+  const observerRef = useRef<ResizeObserver | null>(null);
 
-  useEffect(() => {
-    const el = ref.current;
+  const ref = useCallback((el: T | null) => {
+    observerRef.current?.disconnect();
     if (!el) return;
 
     const check = () => {
@@ -15,16 +14,16 @@ export function useIsOverflowing<T extends HTMLElement>(
       setOverflowRight(el.scrollWidth - el.scrollLeft > el.clientWidth);
     };
 
-    const observer = new ResizeObserver(check);
-    observer.observe(el);
+    observerRef.current = new ResizeObserver(check);
+    observerRef.current.observe(el);
     el.addEventListener("scroll", check);
     check();
 
     return () => {
-      observer.disconnect();
+      observerRef.current?.disconnect();
       el.removeEventListener("scroll", check);
     };
   }, []);
 
-  return { overflowLeft, overflowRight };
+  return { ref, overflowLeft, overflowRight };
 }
