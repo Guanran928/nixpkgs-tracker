@@ -76,6 +76,8 @@ function App() {
     controllerRef.current = new AbortController();
     setPullRequestNumberInput(pullRequestString);
     submitPullRequest(pullRequestNumber, controllerRef.current.signal);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // submit handler

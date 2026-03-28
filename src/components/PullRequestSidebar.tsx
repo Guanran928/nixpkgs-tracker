@@ -98,7 +98,14 @@ export default function PullRequestSidebar({
         return updated;
       });
     });
-  }, [trackingPullRequests, fetchPullRequestData, fetchBranchData]);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    trackingPullRequests,
+    fetchPullRequestData,
+    fetchBranchData,
+    trackingPullRequestsFailed,
+  ]);
 
   return (
     <AnimatePresence>

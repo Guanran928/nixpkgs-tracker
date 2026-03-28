@@ -21,6 +21,7 @@ export default function RateLimitBar({
 
   useEffect(() => {
     setRateLimit({ remaining: null, resetTimestamp: null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings.token]);
 
   useEffect(() => {
@@ -37,6 +38,8 @@ export default function RateLimitBar({
     }, timeRemaining);
 
     return () => clearTimeout(timer);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rateLimit.resetTimestamp]);
 
   return (
