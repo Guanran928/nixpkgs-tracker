@@ -89,6 +89,22 @@ function App() {
   }, [settings.token]);
 
   useEffect(() => {
+    if (!rateLimit.resetTimestamp) return;
+
+    const timeRemaining = rateLimit.resetTimestamp * 1000 - Date.now();
+    if (timeRemaining <= 0) {
+      setRateLimit({ remaining: null, resetTimestamp: null });
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setRateLimit({ remaining: null, resetTimestamp: null });
+    }, timeRemaining);
+
+    return () => clearTimeout(timer);
+  }, [rateLimit.resetTimestamp]);
+
+  useEffect(() => {
     localStorage.setItem(
       "tracking_pull_requests",
       JSON.stringify(
