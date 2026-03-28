@@ -1,12 +1,12 @@
 import type {
   PullRequestBranchStatus,
   PullRequestMetadata,
-} from "./PullRequestStatus";
+} from "@/components/PullRequestStatus";
 import type { components } from "@octokit/openapi-types";
 
-import TrackPullRequestButton from "./TrackPullRequestButton";
-
+import TrackPullRequestButton from "@/components/TrackPullRequestButton";
 import { useIsOverflowing } from "@/hooks/use-is-overflowing";
+
 import { Check, CircleAlert } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";

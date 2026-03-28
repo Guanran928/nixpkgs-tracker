@@ -1,22 +1,19 @@
 import type {
   PullRequestBranchStatus,
   PullRequestMetadata,
-} from "./components/PullRequestStatus";
+} from "@/components/PullRequestStatus";
 import type { components } from "@octokit/openapi-types";
 
+import PullRequestSidebar from "@/components/PullRequestSidebar";
 import PullRequestStatus from "@/components/PullRequestStatus";
-import PullRequestStatusCompact from "@/components/PullRequestStatusCompact";
+import RateLimitBar from "@/components/RateLimitBar";
 import { SettingsDialog } from "@/components/SettingsDialog";
-import { useSettings } from "@/context/SettingsContext";
+import { useGitHubFetch } from "@/hooks/use-github-fetch";
 
-import NumberFlow from "@number-flow/react";
 import { AnimatePresence, motion } from "motion/react";
-import { GitPullRequestArrow } from "lucide-react";
 import { toast } from "sonner";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useMediaQuery } from "usehooks-ts";
+import { useEffect, useRef, useState } from "react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -31,12 +28,6 @@ import {
 } from "@/components/ui/card";
 
 type PullRequestInformation = components["schemas"]["pull-request"];
-type GitHubErrorResponse = components["schemas"]["basic-error"];
-
-type RateLimitState = {
-  remaining: number | null;
-  resetTimestamp: number | null;
-};
 
 type PullRequestLookupState = {
   isFetching: boolean;
@@ -45,26 +36,14 @@ type PullRequestLookupState = {
 };
 
 const DEFAULT_TITLE = document.title;
-const MotionCard = motion.create(Card);
-const fetchingPRs = new Set<number>();
 
 function App() {
-  const { settings } = useSettings();
-
-  const isLarge = useMediaQuery("(min-width: 768px)"); // tailwind's `md:`
-
-  const [rateLimit, setRateLimit] = useState<RateLimitState>({
-    remaining: null,
-    resetTimestamp: null,
-  });
+  const { rateLimit, setRateLimit, fetchPullRequestData, fetchBranchData } =
+    useGitHubFetch();
 
   const [trackingPullRequests, setTrackingPullRequests] = useState<
     PullRequestMetadata[]
   >(() => JSON.parse(localStorage.getItem("tracking_pull_requests") || "[]"));
-
-  const [trackingPullRequestsFailed, setTrackingPullRequestsFailed] = useState<
-    number[]
-  >([]);
 
   const [pullRequestLookup, setPullRequestLookup] =
     useState<PullRequestLookupState>({
@@ -83,267 +62,6 @@ function App() {
       document.title = DEFAULT_TITLE;
     }
   }, [pullRequestLookup]);
-
-  useEffect(() => {
-    setRateLimit({ remaining: null, resetTimestamp: null });
-  }, [settings.token]);
-
-  useEffect(() => {
-    if (!rateLimit.resetTimestamp) return;
-
-    const timeRemaining = rateLimit.resetTimestamp * 1000 - Date.now();
-    if (timeRemaining <= 0) {
-      setRateLimit({ remaining: null, resetTimestamp: null });
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      setRateLimit({ remaining: null, resetTimestamp: null });
-    }, timeRemaining);
-
-    return () => clearTimeout(timer);
-  }, [rateLimit.resetTimestamp]);
-
-  useEffect(() => {
-    localStorage.setItem(
-      "tracking_pull_requests",
-      JSON.stringify(
-        trackingPullRequests.map(({ pullRequestNumber }) => ({
-          pullRequestNumber,
-        })),
-      ),
-    );
-  }, [trackingPullRequests]);
-
-  const parseRateLimitHeaders = (headers: Headers) => {
-    const rateLimitRemaining = headers.get("x-ratelimit-remaining");
-    const rateLimitReset = headers.get("x-ratelimit-reset");
-
-    if (rateLimitRemaining && rateLimitReset) {
-      const remaining = parseInt(rateLimitRemaining, 10);
-      const resetTimestamp = parseInt(rateLimitReset, 10);
-
-      if (!isNaN(remaining) && !isNaN(resetTimestamp)) {
-        setRateLimit((prev) => ({
-          remaining:
-            prev.remaining === null || remaining < prev.remaining
-              ? remaining
-              : prev.remaining,
-
-          resetTimestamp:
-            prev.resetTimestamp === null || resetTimestamp > prev.resetTimestamp
-              ? resetTimestamp
-              : prev.resetTimestamp,
-        }));
-      }
-    }
-  };
-
-  const fetchPullRequestData = useCallback(
-    async (pullRequestNumber: number, signal?: AbortSignal) => {
-      const headers: HeadersInit = {
-        Accept: "application/vnd.github+json",
-      };
-
-      if (settings.token) {
-        headers["Authorization"] = `Bearer ${settings.token}`;
-      }
-
-      const response = await fetch(
-        `https://api.github.com/repos/nixos/nixpkgs/pulls/${pullRequestNumber}`,
-        { headers, signal },
-      );
-
-      if (!response.ok) {
-        const data = (await response.json()) as GitHubErrorResponse;
-        toast.error(`Error while fetching PR #${pullRequestNumber}`, {
-          description: data.message,
-        });
-
-        return null;
-      }
-
-      parseRateLimitHeaders(response.headers);
-
-      return (await response.json()) as PullRequestInformation;
-    },
-    [settings.token],
-  );
-
-  const fetchBranchData = useCallback(
-    async (pullRequestData: PullRequestInformation, signal?: AbortSignal) => {
-      const headers: HeadersInit = {
-        Accept: "application/vnd.github+json",
-      };
-
-      if (settings.token) {
-        headers["Authorization"] = `Bearer ${settings.token}`;
-      }
-
-      let branches;
-      const releaseMatch =
-        pullRequestData.base.ref.match(/^release-(\d+\.\d+)$/);
-      const releaseStagingMatch =
-        pullRequestData.base.ref.match(/^staging-(\d+\.\d+)$/);
-
-      if (releaseMatch) {
-        const ver = releaseMatch[1];
-        branches = [
-          `nixos-${ver}`,
-          `nixos-${ver}-small`,
-          `nixpkgs-${ver}-darwin`,
-        ];
-      } else if (releaseStagingMatch) {
-        const ver = releaseStagingMatch[1];
-        branches = [
-          `staging-next-${ver}`,
-          `release-${ver}`,
-          `nixos-${ver}`,
-          `nixos-${ver}-small`,
-          `nixpkgs-${ver}-darwin`,
-        ];
-      } else {
-        switch (pullRequestData.base.ref) {
-          case "master":
-            branches = [
-              "nixpkgs-unstable",
-              "nixos-unstable",
-              "nixos-unstable-small",
-            ];
-            break;
-          case "staging-next":
-            branches = [
-              "master",
-              "nixpkgs-unstable",
-              "nixos-unstable",
-              "nixos-unstable-small",
-            ];
-            break;
-          case "staging":
-            branches = [
-              "staging-next",
-              "master",
-              "nixpkgs-unstable",
-              "nixos-unstable",
-              "nixos-unstable-small",
-            ];
-            break;
-          case "python-updates":
-            branches = [
-              "staging",
-              "staging-next",
-              "master",
-              "nixpkgs-unstable",
-              "nixos-unstable",
-              "nixos-unstable-small",
-            ];
-            break;
-          default:
-            toast.error("Unknown target branch");
-            return null;
-        }
-      }
-
-      const status = await Promise.all(
-        branches.map(async (branch) => {
-          const response = await fetch(
-            `https://api.github.com/repos/NixOS/nixpkgs/compare/${branch}...${pullRequestData.merge_commit_sha}`,
-            { headers, signal },
-          );
-
-          if (!response.ok) {
-            const prdata = (await response.json()) as GitHubErrorResponse;
-
-            return {
-              branch,
-              status: "fetch-error",
-              message: prdata.message,
-            } as PullRequestBranchStatus;
-          }
-
-          parseRateLimitHeaders(response.headers);
-
-          const prdata = await response.json();
-          if (prdata.status === "identical" || prdata.status === "behind") {
-            return { branch, status: "merged" } as PullRequestBranchStatus;
-          }
-          return { branch, status: "not-merged" } as PullRequestBranchStatus;
-        }),
-      );
-
-      const failed = status.filter((s) => s.status === "fetch-error");
-      if (failed.length > 0) {
-        const uniqueMessages = [
-          ...new Set(failed.map((s) => s.message).filter(Boolean)),
-        ];
-        toast.error(
-          `Failed to fetch ${failed.length}/${branches.length} branches for PR #${pullRequestData.number}`,
-          { description: uniqueMessages.join(", ") },
-        );
-      }
-
-      return status;
-    },
-    [settings.token],
-  );
-
-  useEffect(() => {
-    const prsWithoutData = trackingPullRequests
-      .filter((pr) => !pr.pullRequestInformation)
-      .filter(
-        (pr) => !trackingPullRequestsFailed.includes(pr.pullRequestNumber),
-      )
-      .filter((pr) => !fetchingPRs.has(pr.pullRequestNumber));
-
-    if (prsWithoutData.length === 0) return;
-
-    prsWithoutData.forEach((pr) => fetchingPRs.add(pr.pullRequestNumber));
-
-    Promise.all(
-      prsWithoutData.map(async (pr) => {
-        const data = await fetchPullRequestData(pr.pullRequestNumber);
-        if (!data) {
-          fetchingPRs.delete(pr.pullRequestNumber);
-          setTrackingPullRequestsFailed((prev) => [
-            ...prev,
-            pr.pullRequestNumber,
-          ]);
-          return null;
-        }
-
-        setTrackingPullRequests((current) => {
-          const updated = [...current];
-          const i = updated.findIndex(
-            (p) => p.pullRequestNumber === pr.pullRequestNumber,
-          );
-          if (i !== -1)
-            updated[i] = { ...updated[i], pullRequestInformation: data };
-          return updated;
-        });
-
-        const branchStatus = await fetchBranchData(data);
-        fetchingPRs.delete(pr.pullRequestNumber);
-
-        return { pr, branchStatus };
-      }),
-    ).then((results) => {
-      setTrackingPullRequests((current) => {
-        const updated = [...current];
-        results.forEach((result) => {
-          if (!result) return;
-          const i = updated.findIndex(
-            (p) => p.pullRequestNumber === result.pr.pullRequestNumber,
-          );
-          if (i !== -1)
-            updated[i] = {
-              ...updated[i],
-              pullRequestBranchStatus: result.branchStatus,
-            };
-        });
-        return updated;
-      });
-    });
-  }, [trackingPullRequests, fetchPullRequestData, fetchBranchData]);
 
   const [pullRequestNumberInput, setPullRequestNumberInput] = useState("");
 
@@ -418,35 +136,7 @@ function App() {
           animate={{ y: "0px", opacity: 1 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
         >
-          <AnimatePresence>
-            {!settings.token &&
-              rateLimit.remaining != null &&
-              rateLimit.resetTimestamp &&
-              rateLimit.remaining < 100 && (
-                <motion.div
-                  className="-z-10 flex flex-wrap justify-center gap-1"
-                  initial={{ height: 0, marginBottom: 0 }}
-                  animate={{ height: "auto", marginBottom: "12px" }}
-                  exit={{ height: 0, marginBottom: 0 }}
-                >
-                  <Badge
-                    variant={
-                      rateLimit.remaining == 0 ? "destructive" : "default"
-                    }
-                  >
-                    <NumberFlow value={rateLimit.remaining} /> requests
-                    remaining
-                  </Badge>
-                  <Badge>
-                    Resets at{" "}
-                    {new Date(
-                      rateLimit.resetTimestamp * 1000,
-                    ).toLocaleTimeString()}
-                  </Badge>
-                </motion.div>
-              )}
-          </AnimatePresence>
-          {/* TODO: I want to animate the height change! */}
+          <RateLimitBar rateLimit={rateLimit} setRateLimit={setRateLimit} />
           <main className="items-start space-y-2 md:flex md:flex-row md:gap-2">
             {/* shadcn/ui's <Card> uses gap-6 by default, but I don't think framer-motion can handle gap changes when a element is removed */}
             <Card className="w-96 max-w-sm gap-0">
@@ -532,54 +222,10 @@ function App() {
               </AnimatePresence>
             </Card>
 
-            <AnimatePresence>
-              {trackingPullRequests.length > 0 && (
-                <MotionCard
-                  className="max-w-sm overflow-x-hidden overflow-y-auto *:w-96"
-                  initial={
-                    isLarge
-                      ? { width: 0, opacity: 0 }
-                      : { height: 0, opacity: 0 }
-                  }
-                  animate={
-                    isLarge
-                      ? { width: "auto", opacity: 1 }
-                      : { height: "auto", opacity: 1 }
-                  }
-                  exit={
-                    isLarge
-                      ? { width: 0, opacity: 0 }
-                      : { height: 0, opacity: 0 }
-                  }
-                >
-                  <div className="space-y-3">
-                    <CardHeader className="font-medium">
-                      <CardTitle className="flex items-center gap-2">
-                        <GitPullRequestArrow />
-                        <h4>Pull requests</h4>
-                      </CardTitle>
-                    </CardHeader>
-                    <Separator />
-                  </div>
-                  {trackingPullRequests.map((pr) => {
-                    return (
-                      <CardContent key={pr.pullRequestNumber}>
-                        <PullRequestStatusCompact
-                          pullRequestNumber={pr.pullRequestNumber}
-                          pullRequestInformation={pr.pullRequestInformation}
-                          pullRequestBranchStatus={pr.pullRequestBranchStatus}
-                          setTrackingPullRequests={setTrackingPullRequests}
-                          trackingPullRequestsFailed={
-                            trackingPullRequestsFailed
-                          }
-                          tracked={true}
-                        />
-                      </CardContent>
-                    );
-                  })}
-                </MotionCard>
-              )}
-            </AnimatePresence>
+            <PullRequestSidebar
+              trackingPullRequests={trackingPullRequests}
+              setTrackingPullRequests={setTrackingPullRequests}
+            />
           </main>
         </motion.div>
         <footer className="bg-background/50 text-muted-foreground px-4 py-2 text-center text-xs">

@@ -1,7 +1,7 @@
-import type { PullRequestMetadata } from "./PullRequestStatus";
+import type { PullRequestMetadata } from "@/components/PullRequestStatus";
 import { BellRing, BellOff } from "lucide-react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export default function TrackPullRequestButton({
   tracked,
