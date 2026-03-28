@@ -14,6 +14,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { GitPullRequestArrow } from "lucide-react";
 import { toast } from "sonner";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useMediaQuery } from "usehooks-ts";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,8 @@ const fetchingPRs = new Set<number>();
 
 function App() {
   const { settings } = useSettings();
+
+  const isLarge = useMediaQuery("(min-width: 768px)"); // tailwind's `md:`
 
   const [rateLimit, setRateLimit] = useState<RateLimitState>({
     remaining: null,
@@ -517,9 +520,21 @@ function App() {
               {trackingPullRequests.length > 0 && (
                 <MotionCard
                   className="max-w-sm overflow-x-hidden overflow-y-auto *:w-96"
-                  initial={{ width: 0, opacity: 0 }}
-                  animate={{ width: "auto", opacity: 1 }}
-                  exit={{ width: 0, opacity: 0 }}
+                  initial={
+                    isLarge
+                      ? { width: 0, opacity: 0 }
+                      : { height: 0, opacity: 0 }
+                  }
+                  animate={
+                    isLarge
+                      ? { width: "auto", opacity: 1 }
+                      : { height: "auto", opacity: 1 }
+                  }
+                  exit={
+                    isLarge
+                      ? { width: 0, opacity: 0 }
+                      : { height: 0, opacity: 0 }
+                  }
                 >
                   <div className="space-y-3">
                     <CardHeader className="font-medium">
