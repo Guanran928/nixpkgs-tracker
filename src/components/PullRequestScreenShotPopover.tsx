@@ -1,4 +1,4 @@
-import { Download, Copy, Camera, Check } from "lucide-react";
+import { Download, Copy, Camera, Check, Snowflake } from "lucide-react";
 import { toPng } from "html-to-image";
 import { useRef, useState, type ReactNode } from "react";
 
@@ -14,6 +14,7 @@ import {
 import { ButtonGroup } from "@/components/ui/button-group";
 import { Card, CardContent } from "@/components/ui/card";
 import { AnimatePresence, motion } from "motion/react";
+import { Separator } from "./ui/separator";
 
 function useTimedState(duration = 1500) {
   const [active, setActive] = useState(false);
@@ -118,7 +119,17 @@ export default function PullRequestScreenShotPopover({
           </PopoverDescription>
         </PopoverHeader>
         <Card ref={ref} className="w-96 shadow-none">
-          <CardContent>{children}</CardContent>
+          <CardContent className="space-y-2">
+            <div>{children}</div>
+            <Separator />
+            <div className="text-muted-foreground flex justify-between text-xs">
+              <span>{new Date().toISOString()}</span>
+              <span>
+                {window.location.hostname}{" "}
+                <Snowflake className="inline-block size-4 align-bottom" />
+              </span>
+            </div>
+          </CardContent>
         </Card>
         <ButtonGroup className="w-full">
           <AnimatedButton
