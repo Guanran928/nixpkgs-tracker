@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Settings } from "lucide-react";
+import { KeyRound, Settings } from "lucide-react";
 import { toast } from "sonner";
 
 import { useSettings } from "@/context/SettingsContext";
@@ -17,6 +17,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function SettingsDialog() {
   const { settings, updateSettings } = useSettings();
@@ -48,13 +53,27 @@ export function SettingsDialog() {
           </DialogHeader>
           <div className="grid gap-3">
             <Label htmlFor="token">GitHub Token</Label>
-            <Input
-              id="token"
-              name="token"
-              value={token}
-              onChange={(e) => setToken(e.target.value)}
-              placeholder="github_pat_..."
-            />
+            <div className="flex gap-1">
+              <Input
+                id="token"
+                name="token"
+                value={token}
+                onChange={(e) => setToken(e.target.value)}
+                placeholder="github_pat_..."
+              />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <a href="https://github.com/settings/tokens" target="_blank">
+                    <Button type="button" variant="outline" size="icon">
+                      <KeyRound />
+                    </Button>
+                  </a>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Go to GitHub</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
           </div>
           <DialogFooter>
             <DialogClose asChild>
