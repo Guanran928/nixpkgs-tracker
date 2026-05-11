@@ -45,6 +45,17 @@ function App() {
     PullRequestMetadata[]
   >(() => JSON.parse(localStorage.getItem("tracking_pull_requests") || "[]"));
 
+  useEffect(() => {
+    localStorage.setItem(
+      "tracking_pull_requests",
+      JSON.stringify(
+        trackingPullRequests.map(({ pullRequestNumber }) => ({
+          pullRequestNumber,
+        })),
+      ),
+    );
+  }, [trackingPullRequests]);
+
   const [pullRequestLookup, setPullRequestLookup] =
     useState<PullRequestLookupState>({
       isFetching: false,

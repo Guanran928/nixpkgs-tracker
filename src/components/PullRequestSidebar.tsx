@@ -33,17 +33,6 @@ export default function PullRequestSidebar({
   >([]);
 
   useEffect(() => {
-    localStorage.setItem(
-      "tracking_pull_requests",
-      JSON.stringify(
-        trackingPullRequests.map(({ pullRequestNumber }) => ({
-          pullRequestNumber,
-        })),
-      ),
-    );
-  }, [trackingPullRequests]);
-
-  useEffect(() => {
     const prsWithoutData = trackingPullRequests
       .filter((pr) => !pr.pullRequestInformation)
       .filter(
