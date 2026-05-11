@@ -10,6 +10,7 @@ import { useMediaQuery } from "usehooks-ts";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
 const MotionCard = motion.create(Card);
 const fetchingPRs = new Set<number>();
@@ -107,6 +108,8 @@ export default function PullRequestSidebar({
     trackingPullRequestsFailed,
   ]);
 
+  const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
+
   return (
     <AnimatePresence>
       {trackingPullRequests.length > 0 && (
@@ -131,9 +134,44 @@ export default function PullRequestSidebar({
             </CardHeader>
             <Separator />
           </div>
-          {trackingPullRequests.map((pr) => {
+          {trackingPullRequests.map((pr, index) => {
             return (
-              <CardContent key={pr.pullRequestNumber}>
+              <CardContent
+                key={pr.pullRequestNumber}
+                draggable={true}
+                onDragStart={(e) => {
+                  setDraggingIndex(index);
+
+                  // use proper drag image when dragging <a> inside <CardContent>
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  e.dataTransfer.setDragImage(
+                    e.currentTarget,
+                    e.clientX - rect.left,
+                    e.clientY - rect.top,
+                  );
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+
+                  if (draggingIndex === null || draggingIndex === index) return;
+
+                  setTrackingPullRequests((prev) => {
+                    const next = [...prev];
+                    const [moved] = next.splice(draggingIndex, 1);
+                    next.splice(index, 0, moved);
+                    return next;
+                  });
+
+                  setDraggingIndex(index);
+                }}
+                onDragEnd={() => {
+                  setDraggingIndex(null);
+                }}
+                className={cn(
+                  "cursor-grab",
+                  draggingIndex === index && "opacity-30",
+                )}
+              >
                 <PullRequestStatusCompact
                   pullRequestNumber={pr.pullRequestNumber}
                   pullRequestInformation={pr.pullRequestInformation}
