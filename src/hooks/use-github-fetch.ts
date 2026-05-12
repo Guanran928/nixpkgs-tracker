@@ -7,6 +7,7 @@ type PullRequestInformation = components["schemas"]["pull-request"];
 import { toast } from "sonner";
 import { useCallback, useState } from "react";
 import { useSettings } from "@/context/SettingsContext";
+import { descendants } from "@/lib/nixpkgs-branches";
 
 export function useGitHubFetch() {
   const { settings } = useSettings();
@@ -81,72 +82,15 @@ export function useGitHubFetch() {
         headers["Authorization"] = `Bearer ${settings.token}`;
       }
 
-      let branches;
-      const releaseMatch =
-        pullRequestData.base.ref.match(/^release-(\d+\.\d+)$/);
-      const releaseStagingMatch =
-        pullRequestData.base.ref.match(/^staging-(\d+\.\d+)$/);
+      const branches = descendants(pullRequestData.base.ref);
 
-      if (releaseMatch) {
-        const ver = releaseMatch[1];
-        branches = [
-          `nixos-${ver}`,
-          `nixos-${ver}-small`,
-          `nixpkgs-${ver}-darwin`,
-        ];
-      } else if (releaseStagingMatch) {
-        const ver = releaseStagingMatch[1];
-        branches = [
-          `staging-next-${ver}`,
-          `release-${ver}`,
-          `nixos-${ver}`,
-          `nixos-${ver}-small`,
-          `nixpkgs-${ver}-darwin`,
-        ];
-      } else {
-        switch (pullRequestData.base.ref) {
-          case "master":
-            branches = [
-              "nixpkgs-unstable",
-              "nixos-unstable",
-              "nixos-unstable-small",
-            ];
-            break;
-          case "staging-next":
-            branches = [
-              "master",
-              "nixpkgs-unstable",
-              "nixos-unstable",
-              "nixos-unstable-small",
-            ];
-            break;
-          case "staging":
-            branches = [
-              "staging-next",
-              "master",
-              "nixpkgs-unstable",
-              "nixos-unstable",
-              "nixos-unstable-small",
-            ];
-            break;
-          case "python-updates":
-            branches = [
-              "staging",
-              "staging-next",
-              "master",
-              "nixpkgs-unstable",
-              "nixos-unstable",
-              "nixos-unstable-small",
-            ];
-            break;
-          default:
-            toast.error("Unknown target branch");
-            return null;
-        }
+      if (branches.size === 0) {
+        toast.error("Unknown target branch");
+        return null;
       }
 
       const status = await Promise.all(
-        branches.map(async (branch) => {
+        [...branches].map(async (branch) => {
           const response = await fetch(
             `https://api.github.com/repos/NixOS/nixpkgs/compare/${branch}...${pullRequestData.merge_commit_sha}`,
             { headers, signal },
@@ -178,7 +122,7 @@ export function useGitHubFetch() {
           ...new Set(failed.map((s) => s.message).filter(Boolean)),
         ];
         toast.error(
-          `Failed to fetch ${failed.length}/${branches.length} branches for PR #${pullRequestData.number}`,
+          `Failed to fetch ${failed.length}/${branches.size} branches for PR #${pullRequestData.number}`,
           { description: uniqueMessages.join(", ") },
         );
       }
