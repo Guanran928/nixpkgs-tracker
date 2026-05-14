@@ -60,7 +60,7 @@ export default function PullRequestStatus({
               </Badge>
             </div>
             {interactive && (
-              <div className="flex space-x-1">
+              <div className="flex gap-1">
                 <PullRequestScreenShotPopover>
                   <PullRequestStatus
                     pullRequestNumber={pullRequestNumber}

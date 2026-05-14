@@ -80,7 +80,7 @@ export default function PullRequestStatusCompact({
         {pullRequestInformation?.state == "closed" && (
           <>
             <ul
-              className="no-scrollbar flex space-x-1 overflow-x-auto whitespace-nowrap"
+              className="no-scrollbar flex gap-1 overflow-x-auto whitespace-nowrap"
               style={{ scrollbarWidth: "none" }}
               ref={ref}
             >

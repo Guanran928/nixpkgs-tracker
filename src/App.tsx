@@ -145,13 +145,13 @@ function App() {
     <>
       <div className="flex h-screen flex-col items-center justify-between p-4 md:p-8">
         <m.div
-          className="flex flex-col items-center space-y-3 md:space-y-4"
+          className="flex flex-col items-center gap-3 md:gap-4"
           initial={{ y: "20px", opacity: 0 }}
           animate={{ y: "0px", opacity: 1 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
         >
           <RateLimitBar rateLimit={rateLimit} setRateLimit={setRateLimit} />
-          <main className="items-start space-y-2 md:flex md:flex-row md:gap-2">
+          <main className="flex flex-col items-start gap-2 md:flex-row md:gap-2">
             {/* shadcn/ui's <Card> uses gap-6 by default, but I don't think framer-motion can handle gap changes when a element is removed */}
             <Card className="w-96 max-w-sm gap-0">
               <CardHeader>
