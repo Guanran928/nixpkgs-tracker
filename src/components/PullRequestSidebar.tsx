@@ -3,7 +3,8 @@ import type { PullRequestMetadata } from "@/components/PullRequestStatus";
 import PullRequestStatusCompact from "@/components/PullRequestStatusCompact";
 import { useGitHubFetch } from "@/hooks/use-github-fetch";
 
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence } from "motion/react";
+import * as m from "motion/react-m";
 import { GitPullRequestArrow } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
@@ -12,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
-const MotionCard = motion.create(Card);
+const MotionCard = m.create(Card);
 const fetchingPRs = new Set<number>();
 
 export default function PullRequestSidebar({

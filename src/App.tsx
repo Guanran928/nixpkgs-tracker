@@ -10,7 +10,8 @@ import RateLimitBar from "@/components/RateLimitBar";
 import { SettingsDialog } from "@/components/SettingsDialog";
 import { useGitHubFetch } from "@/hooks/use-github-fetch";
 
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence } from "motion/react";
+import * as m from "motion/react-m";
 import { toast } from "sonner";
 import { useEffect, useRef, useState } from "react";
 
@@ -143,7 +144,7 @@ function App() {
   return (
     <>
       <div className="flex h-screen flex-col items-center justify-between p-4 md:p-8">
-        <motion.div
+        <m.div
           className="flex flex-col items-center space-y-3 md:space-y-4"
           initial={{ y: "20px", opacity: 0 }}
           animate={{ y: "0px", opacity: 1 }}
@@ -206,7 +207,7 @@ function App() {
 
               <AnimatePresence>
                 {pullRequestLookup.information && (
-                  <motion.div
+                  <m.div
                     className="overflow-hidden"
                     initial={{ height: 0, filter: "blur(4px)" }}
                     animate={{ height: "auto", filter: "blur(0px)" }}
@@ -230,7 +231,7 @@ function App() {
                         />
                       </CardContent>
                     </div>
-                  </motion.div>
+                  </m.div>
                 )}
               </AnimatePresence>
             </Card>
@@ -240,7 +241,7 @@ function App() {
               setTrackingPullRequests={setTrackingPullRequests}
             />
           </main>
-        </motion.div>
+        </m.div>
         <footer className="bg-background/50 text-muted-foreground px-4 py-2 text-center text-xs">
           <div>Made with &lt;3 by Guanran Wang</div>
           <div>

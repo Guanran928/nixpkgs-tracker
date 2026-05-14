@@ -13,7 +13,8 @@ import {
 } from "@/components/ui/popover";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { Card, CardContent } from "@/components/ui/card";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence } from "motion/react";
+import * as m from "motion/react-m";
 import { Separator } from "./ui/separator";
 
 function useTimedState(duration = 1500) {
@@ -56,7 +57,7 @@ function AnimatedButton({
       className="relative flex-1 overflow-hidden"
     >
       <AnimatePresence mode="popLayout" initial={false}>
-        <motion.span
+        <m.span
           key={done ? count : "idle"}
           className="flex items-center gap-2"
           whileTap={{ scale: 0.97 }}
@@ -74,7 +75,7 @@ function AnimatedButton({
               {icon} {label}
             </>
           )}
-        </motion.span>
+        </m.span>
       </AnimatePresence>
     </Button>
   );

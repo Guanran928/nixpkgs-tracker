@@ -1,5 +1,6 @@
 import NumberFlow from "@number-flow/react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence } from "motion/react";
+import * as m from "motion/react-m";
 import { useEffect } from "react";
 
 import { Badge } from "@/components/ui/badge";
@@ -48,7 +49,7 @@ export default function RateLimitBar({
         rateLimit.remaining != null &&
         rateLimit.resetTimestamp &&
         rateLimit.remaining < 100 && (
-          <motion.div
+          <m.div
             className="-z-10 flex flex-wrap justify-center gap-1"
             initial={{ height: 0, marginBottom: 0 }}
             animate={{ height: "auto", marginBottom: "12px" }}
@@ -63,7 +64,7 @@ export default function RateLimitBar({
               Resets at{" "}
               {new Date(rateLimit.resetTimestamp * 1000).toLocaleTimeString()}
             </Badge>
-          </motion.div>
+          </m.div>
         )}
     </AnimatePresence>
   );

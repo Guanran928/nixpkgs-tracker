@@ -11,7 +11,8 @@ import { Check, CircleAlert } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence } from "motion/react";
+import * as m from "motion/react-m";
 
 type PullRequestInformation = components["schemas"]["pull-request"];
 
@@ -53,7 +54,7 @@ export default function PullRequestStatusCompact({
       <div className="relative">
         <AnimatePresence>
           {overflowLeft && (
-            <motion.div
+            <m.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -134,7 +135,7 @@ export default function PullRequestStatusCompact({
 
         <AnimatePresence>
           {overflowRight && (
-            <motion.div
+            <m.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
