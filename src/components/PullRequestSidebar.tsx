@@ -34,12 +34,12 @@ export default function PullRequestSidebar({
   >([]);
 
   useEffect(() => {
-    const prsWithoutData = trackingPullRequests
-      .filter((pr) => !pr.pullRequestInformation)
-      .filter(
-        (pr) => !trackingPullRequestsFailed.includes(pr.pullRequestNumber),
-      )
-      .filter((pr) => !fetchingPRs.has(pr.pullRequestNumber));
+    const prsWithoutData = trackingPullRequests.filter(
+      (pr) =>
+        !pr.pullRequestInformation &&
+        !trackingPullRequestsFailed.includes(pr.pullRequestNumber) &&
+        !fetchingPRs.has(pr.pullRequestNumber),
+    );
 
     if (prsWithoutData.length === 0) return;
 
